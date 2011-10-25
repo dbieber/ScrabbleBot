@@ -1,0 +1,6 @@
+mkdir $1
+scp dbieber@hats.princeton.edu:~/scrabble/statsOSPD3_fedora.txt $1/fedora01
+scp dbieber@hats.princeton.edu:~/scrabble/statsOSPD3_fedora2.txt $1/fedora02
+scp dbieber@hats.princeton.edu:~/scrabble/statsOSPD3.txt $1/fez01
+scp dbieber@hats.princeton.edu:~/scrabble/statsOSPD3_fez2.txt $1/fez02
+cp statsOSPD3.txt $1/hp01

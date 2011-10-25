@@ -1,0 +1,112 @@
+def DEPRECATED():
+    def bestOf(row, col, vert, offsets, possibilities, left=0, right=0, move={}, used=[], keepLeft=True):
+        score = 0
+        if move and isWordAt(move, row, col, vert):
+            (score, w) = getWordScore(move, row, col, vert)
+        if keepLeft:
+            for i in range(len(possibilities[left-1])):
+                if i in used:
+                    continue
+                r = possibilities[left-1][i]
+                ch = racks[currentPlayer][r]
+                ro, co = row, col
+                if vert:
+                    ro-=offsets[left]
+                else:
+                    co-=offsets[left]
+                placeTile(move, ro, co, ch)
+                used.append(r)
+                newScore = bestOf(row, col, vert, offsets, possibilities, left-1, right, move, used)
+                used.pop()
+                removeTile(move, row, col)
+            
+        # for i in range(len(possibilities[right+1])):
+            # if i in used:
+                # continue
+            # r = possibilities[right+1][i]
+            # ch = racks[currentPlayer][r]
+            # ro,co = row, col
+            # if vert:
+                # ro+=offsets[right]
+            # else:
+                # co+=offsets[right]
+            # placeTile(move, ro, co, ch)
+            # used.append(r)
+            # newScore = bestOf(row, col, vert, offsets, possibilities, left, right+1, move, used, False)
+            # used.pop()
+            # placeTile(move, row, col, None)
+
+    def bestWordAt2(row, col, vert):
+        if letterAt(row, col):
+            return None
+        #for each square between decr 6 blanks and incr 6 blanks, figure out all the letters that could go there
+        ln = len(racks[currentPlayer])
+        possibilities = [0]*(2*ln-1)
+        offsets = [0]*(2*ln-1)
+        #1#3#5!7#9#1#
+        possibilities[ln-1] = range(ln)
+
+        r,c = row, col
+        offset = 0
+        while offset > -ln+1:
+            if vert:
+                r-=1
+            else:
+                c-=1
+            offset -= 1
+            while letterAt(r,c):
+                if vert:
+                    r-=1
+                else:
+                    c-=1
+            if not inBounds(r,c):
+                break
+            for i in range(ln):
+                if isWordAt({row:{col:racks[currentPlayer][i]}}, r, c, not vert):
+                    if possibilities[offset] == 0:
+                        possibilities[offset] = []
+                    possibilities[offset].append(i)
+                    if vert:
+                        offsets[offset] = r - row
+                    else:
+                        offsets[offset] = c - col
+        r,c = row, col
+        offset = 0
+        while offset < ln-1:
+            if vert:
+                r+=1
+            else:
+                c+=1
+            offset += 1
+            while letterAt(r,c):
+                if vert:
+                    r+=1
+                else:
+                    c+=1
+            if not inBounds(r,c):
+                break
+            for i in range(ln):
+                if isWordAt({row:{col:racks[currentPlayer][i]}}, r, c, not vert):
+                    if possibilities[offset] == 0:
+                        possibilities[offset] = []
+                    possibilities[offset].append(i)
+                    if vert:
+                        offsets[offset] = r - row
+                    else:
+                        offsets[offset] = c - col
+
+        return bestOf(row, col, vert, offsets, possibilities)
+    def bestMove2():
+        noLetters = True
+        for row in board:
+            for col in board[row]:
+                if letterAt(row, col):
+                    noLetters = False
+                    best = bestWordAt(row+1, col, False)
+                    move = bestWordAt(row-1, col, False)
+                    move = bestWordAt(row, col+1, True)
+                    move = bestWordAt(row, col-1, True)
+                    move = bestWordAt(row, col, True)
+                    move = bestWordAt(row, col, False)
+        if noLetters:
+            move = bestWordAt(7, 7, False)
