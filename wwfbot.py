@@ -7,12 +7,12 @@ import windowsBot
 import scratch
 
 #Reference Images
-wwfTopLeft = Image.open("rsrc/wwfTopLeft3.png")
+wwfTopLeft = Image.open("rsrc/wwfTopLeft.png")
 shiftX = 224
 shiftY = 49
 
-wwfYourMove = Image.open("rsrc/yourMove3.png")
-wwfYourMove2 = Image.open("rsrc/yourMove4.png")
+wwfYourMove = Image.open("rsrc/yourMove.png")
+wwfYourMove2 = Image.open("rsrc/yourMove2.png")
 wwfClose = Image.open("rsrc/close.png")
 wwfSend = Image.open("rsrc/send.png")
 wwfSendRequest = Image.open("rsrc/sendRequest.png")
@@ -71,7 +71,7 @@ def findSubimage(needle, haystack):
     needleSize = needle.size
     maxX = haySize[0] - needleSize[0]
     maxY = haySize[1] - needleSize[1]
-    #TODO could be faster using needle.load() and haystack.load()
+    #TODO could be faster using needle.load() and haystack.load()?
     
     needleData = needle.getdata()
     hayData = haystack.getdata()
@@ -91,8 +91,8 @@ def findSubimage(needle, haystack):
             if okay:
                 return (i, j)
     print "Can't find needle in haystack."
-    haystack.save("hay.png")
-    needle.save("needle.png")
+    # haystack.save("hay.png")
+    # needle.save("needle.png")
     return None
     
 
@@ -133,11 +133,7 @@ def blankTileImage(letter):
 def getBoardTile(im, r, c):
     tileImage = boardTileImage(im, r, c)
     
-    #START COPIED FROM V1
-    alphabet = "_@3ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    #alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    
     otherSquares = ["0", "TW", "DW", "DL", "TL", "START"]
     s = tileSize
     bestDistance =  s*s*s
@@ -146,7 +142,7 @@ def getBoardTile(im, r, c):
     for letter in alphabet:
         #letterImage = blankTileImage(letter)
         letterImage = Image.open("rsrc/color/%s.png" % letter)#.convert("1")
-        letterImage.save("temp.png")
+        #letterImage.save("temp/letter.png")
         
         b = 8
         distance = imageDistance(letterImage.crop((b,b,s-b,s-b)), tileImage.crop((b,b,s-b,s-b)))
@@ -364,7 +360,6 @@ def init():
 def main():
     if not init():
         return
-        
     if len(argv) == 1:
         runBot()
         return

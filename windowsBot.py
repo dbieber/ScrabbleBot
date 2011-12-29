@@ -11,7 +11,7 @@ def click(x0, y0):
 	time.sleep(0.1)
 	
 	
-def drag(x0, y0, x1, y1): #add smoothness options
+def drag(x0, y0, x1, y1): # TODO add smoothness options
 	x0 = int(x0)
 	y0 = int(y0)
 	x1 = int(x1)

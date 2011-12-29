@@ -6,13 +6,13 @@ import boardGrab
 import tkFont
 
 #TODO put things in classes to eliminate globals
-FONT_SOURCE = "pilfonts/courBO24.pil"
+FONT_SOURCE = "rsrc/font.pil"
 TILE_IMAGE_SOURCE = "rsrc/sprites.png"
-STATISTICS_SOURCE = "statsOSPD3.txt"
+STATISTICS_SOURCE = "data/statsOSPD3.txt"
 
-dictionarySource = "ScrabbleDictionarys/OSPD3.txt"
-boardSource = "wwfBoard.txt"
-bagTemplateSource = "scrabbleBag.txt"
+dictionarySource = "dictionaries/OSPD3.txt"
+boardSource = "boards/wwfBoard.txt"
+bagTemplateSource = "bags/scrabbleBag.txt"
 out = None
 
 NUM_PLAYERS = 2
