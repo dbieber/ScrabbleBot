@@ -1,0 +1,9 @@
+For scrabble shell:
+> python scratch.py
+
+In scrabble shell, to collect data and post games to Tumblr:
+> gather
+
+In windows, in chrome, on Facebook, in WWF:
+> python wwfbot.py
+
