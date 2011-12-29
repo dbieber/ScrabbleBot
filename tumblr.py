@@ -1,8 +1,9 @@
+from credentials import TUMBLR_PASS
 from urllib import urlencode
 from urllib2 import urlopen
 
 email = 'pyscrabble@gmail.com'
-password = 'py5pass'
+password = TUMBLR_PASS
 generator = 'PyScrabble'
 writeURL = 'http://www.tumblr.com/api/write' 
 sendToTwitter = 'auto'
