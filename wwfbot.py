@@ -8,8 +8,8 @@ import scratch
 
 #Reference Images
 wwfTopLeft = Image.open("rsrc/wwfTopLeft.png")
-shiftX = 224
-shiftY = 49
+shiftX = 223
+shiftY = 47
 
 wwfYourMove = Image.open("rsrc/yourMove.png")
 wwfYourMove2 = Image.open("rsrc/yourMove2.png")
@@ -50,8 +50,8 @@ def pixelDistance(p1, p2):
     if type(p2) == INT:
         p2 = (p2,p2,p2)
     distance = 0
-    for i in range(len(p1)):
-        distance+=abs(p1[i]-p2[i])
+    for i in range(3):
+        distance += abs(p1[i]-p2[i])
     return distance
 
 def imageDistance(im0, im1): #should be same size and square
@@ -61,7 +61,7 @@ def imageDistance(im0, im1): #should be same size and square
     data1 = im1.getdata()
     for i in range(len(data0)):
         if pixelDistance(data0[i], data1[i]) > 80:
-            distance+=1
+            distance += 1
                 
     return distance
 
@@ -172,6 +172,8 @@ def rackTileImage(im, i):
 
 def getRackTile(im, i):
     tileImage = rackTileImage(im, i)
+
+    tileImage.save("tempTileImage.png")
     
     #START COPIED FROM V1
     alphabet = "0_ABCDEFGHIJKLMNOPQRSTUVWXYZ"

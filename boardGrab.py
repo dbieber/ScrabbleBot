@@ -4,6 +4,7 @@ import ImageGrab
 import win32api, win32con
 import time
 
+wwfTopLeft = Image.open("rsrc/wwfTopLeft.png")
 offset = (90,75)
 
 def drag(x0, y0, x1, y1):
@@ -41,7 +42,7 @@ def findSubimage(needle, haystack):
 def getWWFImage():
 	screen = ImageGrab.grab()
 	
-	topleft = Image.open("rsrc/wwfTopLeft3.png")
+	topleft = wwfTopLeft
 	
 	coords = findSubimage(topleft, screen)
 	global offset
@@ -184,7 +185,7 @@ def shuffleOrRecall():
 	
 def clickSendRequest():
 	screen = ImageGrab.grab()
-	im = Image.open("rsrc/wwfTopLeft3.png")
+	im = wwfTopLeft
 
 	
 def finalizeMove():
