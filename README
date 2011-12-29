@@ -1,4 +1,4 @@
-For scrabble shell:
+To launch scrabble shell:
 > python scratch.py
 
 In scrabble shell, to simulate a game then print the resulting board:
