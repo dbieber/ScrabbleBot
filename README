@@ -1,8 +1,9 @@
 For scrabble shell:
 > python scratch.py
 
-In scrabble shell, to simulate a game:
+In scrabble shell, to simulate a game then print the resulting board:
 > sim
+> p
 
 In scrabble shell, to collect data and post games to Tumblr:
 > gather
