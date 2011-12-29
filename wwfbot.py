@@ -11,8 +11,8 @@ wwfTopLeft = Image.open("rsrc/wwfTopLeft3.png")
 shiftX = 224
 shiftY = 49
 
-wwfYourMove = Image.open("rsrc/yourMove1.png")
-wwfYourMove2 = Image.open("rsrc/yourMove2.png")
+wwfYourMove = Image.open("rsrc/yourMove3.png")
+wwfYourMove2 = Image.open("rsrc/yourMove4.png")
 wwfClose = Image.open("rsrc/close.png")
 wwfSend = Image.open("rsrc/send.png")
 wwfSendRequest = Image.open("rsrc/sendRequest.png")
@@ -138,7 +138,7 @@ def getBoardTile(im, r, c):
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     #alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     
-    otherSquares = ["0", "TW", "DW", "DL", "TL"]
+    otherSquares = ["0", "TW", "DW", "DL", "TL", "START"]
     s = tileSize
     bestDistance =  s*s*s
     bestLetter = None
