@@ -1,6 +1,63 @@
-import optparse
+class Position():
+    DOWN = 0
+    ACROSS = 1
 
-class SGame():
+    def copy(self):
+        return Position(self.row, self.col, self.direction)
+
+    def up(self):
+        return Position(self.row - 1, self.col)
+
+    def down(self):
+        return Position(self.row + 1, self.col)
+
+    def left(self):
+        return Position(self.row, self.col - 1)
+
+    def right(self):
+        return Position(self.row, self.col + 1)
+
+    def step(self, amount=1):
+        if self.direction == self.DOWN:
+            self.row += amount
+        elif self.direction == self.ACROSS:
+            self.col += amount
+
+    def switch_direction(self):
+        if self.direction == self.DOWN:
+            self.direction = self.ACROSS
+        elif self.direction == self.ACROSS:
+            self.direction = self.DOWN
+
+    def __init__(self, row=None, col=None, direction=None):
+        self.row = row
+        self.col = col
+        self.direction = direction
+
+class Move():
+    PLAY = 0
+    PASS = 1
+    EXCHANGE = 2
+    RESIGN = 3
+
+    def set_move_type(self, move_type):
+        self.move_type = move_type
+
+    def set_letters(self, letters):
+        self.letters = letters
+
+    def set_position(self, position):
+        self.position = position
+
+    def place_word_at(self, word, position, game=None):
+        pass # TODO
+
+    def __init__(self, move_type=None, letters=None, position=None):
+        self.move_type = move_type
+        self.letters = letters
+        self.position = position
+
+class Game():
     def disallow_once_started(msg="do that"):
         def wrap(f):
             def wrapped_f(self, *args):
@@ -11,7 +68,7 @@ class SGame():
             return wrapped_f
         return wrap
 
-    def disallow_before_started(msg="do that"):
+    def disallow_until_started(msg="do that"):
         def wrap(f):
             def wrapped_f(self, *args):
                 if not self.started:
@@ -20,6 +77,54 @@ class SGame():
                 f(self, *args)
             return wrapped_f
         return wrap
+
+    @disallow_until_started("make move")
+    def make_move(self, move):
+        if move.move_type == Move.PASS:
+            self.__next_turn()
+        elif move.move_type == Move.PLAY:
+            if not self.__is_valid_move(move):
+                return
+            self.__play_move(move)
+            self.__next_turn()
+        elif move.move_type == Move.RESIGN:
+            self.finished = True
+        elif move.move_type == Move.EXCHANGE:
+            pass
+
+    def __play_move(self, move):
+        position = move.position.copy()
+        for letter in move.letters:
+            while self.board.letter_at(position):
+                position.step()
+            self.board.set_letter_at(letter, position)
+            self.racks[self.current_player].remove(letter)
+
+    def __is_valid_move(self, move):
+        if not self.__is_valid_placement(move):
+            return False
+        if not (set(move.letters) <= set(self.racks[self.current_player])):
+            return False
+        return True
+
+    def __is_valid_placement(self, move):
+        position = move.position.copy()
+        spaces_available = 0
+        next_to_letter = False
+        covers_start_square = False
+        while self.board.is_in_bounds(position) and spaces_available < len(move.letters):
+            if not self.board.letter_at(position):
+                spaces_available += 1
+                if self.board.is_next_to_letter(position):
+                    next_to_letter = True
+                if self.board.covers_start_square(position):
+                    covers_start_square = True
+            position.step()
+        if spaces_available < len(move.letters):
+            return False
+        if not next_to_letter and not covers_start_square:
+            return False
+        return True
 
     @disallow_once_started("use word list")
     def use_word_list(self, word_list):
@@ -31,29 +136,44 @@ class SGame():
 
     @disallow_once_started("use board template")
     def use_board_template(self, template):
-        self.board = SBoard(template)
+        self.board = Board(template)
 
     @disallow_once_started("use bag template")
     def use_bag_template(self, template):
-        self.bag = SBag(template)
+        self.bag = Bag(template)
 
     @disallow_once_started("start game")
     def start(self):
         if not self.id:
             print "Starting game without an id!"
-        if not self.board or not isinstance(self.board, SBoard):
+        if not self.board or not isinstance(self.board, Board):
             print "Cannot start without board"
             return
-        if not self.bag or not isinstance(self.bag, SBag):
+        if not self.bag or not isinstance(self.bag, Bag):
             print "Cannot start without bag"
             return
-        if not self.rules or not isinstance(self.rules, SRules):
+        if not self.rules or not isinstance(self.rules, Rules):
             print "Cannot start without rules"
             return
-        if not self.word_list or not isinstance(self.word_list, SWordList):
+        if not self.word_list or not isinstance(self.word_list, WordList):
             print "Cannot start without word list"
             return
+        self.current_player = 0
+        self.scores = [0] * self.rules.num_players
+        self.racks = [[]] * self.rules.num_players
         self.started = True
+
+        for i in xrange(self.rules.num_players):
+            self.__fill_rack(i)
+
+    def __next_turn(self):
+        self.current_player += 1
+        self.current_player %= self.rules.num_players
+
+    def __fill_rack(self, player_num):
+        rack = self.racks[player_num]
+        while len(rack) < self.rules.rack_size:
+            rack.append(self.bag.get_letter())
 
     def __init__(self):
         self.id = None
@@ -62,17 +182,34 @@ class SGame():
         self.history = None
         self.rules = None
         self.word_list = None
+        self.current_player = None
+        self.scores = None
+        self.racks = None
         self.started = False
+        self.finished = False
 
-class SRules():
-    VALID_WORDS_ONLY = 0
+class Rules():
+    CHALLENGE_STANDARD = 0
+    CHALLENGE_FRIENDLY = 1
+    CHALLENGE_VALID_ONLY = 2
+
+    # When a player empties their rack and the bag is empty
+    END_GAME_STANDARD = 0 
+    # When a player reaches X points
+    END_GAME_POINTS = 1
+    # After X turns
+    END_GAME_TURNS = 2
 
     def __init__(self):
         self.num_players = 2
-        self.challenge_mode = self.VALID_WORDS_ONLY
+        self.challenge_mode = self.CHALLENGE_VALID_ONLY
         self.time_limit = None
+        self.rack_size = 7
+        self.bingo_bonus = 50
+        self.end_game = self.END_GAME_STANDARD
+        self.end_game_limit = None
 
-class SWordList():
+class WordList():
     def add_word(self, word):
         self.words.add(word)
 
@@ -92,26 +229,67 @@ class SWordList():
             word = line.strip().upper()
             self.add_word(word)
 
-class SBag():
-    def __init__(self, template):
-        pass
+import random
+class Bag():
+    def get_letter(self):
+        if not self.letters:
+            return None
+        index = random.randint(0, len(self.letters) - 1)
+        return self.letters.pop(index)
 
-class SBagTemplate():
+    def exchange_letters(self, letters):
+        if len(letters) > len(self.letters):
+            return letters
+        new_letters = []
+        while len(new_letters) < len(letters):
+            new_letters.append(self.get_letter())
+        self.letters += letters
+        return new_letters
+
+    def __fill(self):
+        self.letters = []
+        for letter in self.template.letters:
+            self.letters += [letter] * self.template.get_letter_amount(letter)
+
+    def __init__(self, template=None):
+        self.letters = []
+        if template:
+            self.template = template.copy()
+            self.__fill()
+
+class BagTemplate():
     BLANK = "_"
 
-    def addTiles(self, letter, amount, value):
+    def add_letters(self, letter, amount, value):
         letter = letter.upper()
-        self.tiles[letter] = (amount, value)
+        self.letters[letter] = (amount, value)
 
-    def getLetterAmount(self, letter):
-        return self.tiles[letter][0]
+    def get_letter_amount(self, letter):
+        return self.letters[letter][0]
 
-    def getLetterValue(self, letter):
-        return self.tiles[letter][1]
+    def get_letter_value(self, letter):
+        return self.letters[letter][1]
+
+    def copy(self):
+        template = BagTemplate()
+        template.copy_from(self)
+        return template
+
+    def copy_from(self, bag_template):
+        self.id = bag_template.id
+        self.letters = {}
+        for letter in bag_template.letters:
+            self.add_letters(
+                letter,
+                bag_template.get_letter_amount(letter),
+                bag_template.get_letter_value(letter))
 
     def __init__(self, filename=None):
         self.id = filename
-        self.tiles = {}
+        self.letters = {}
+
+        if not filename:
+            return
 
         try:
             f = open(filename, 'r')
@@ -127,16 +305,87 @@ class SBagTemplate():
                 value = int(line[2])
                 if line[0].upper() == 'BLANK':
                     letter = self.BLANK
-                self.addTiles(letter, amount, value)
+                self.add_letters(letter, amount, value)
 
-class SBoard():
+class Board():
+    def is_in_bounds(self, position):
+        if position.row > self.height or position.col > self.width:
+            return False
+        if position.row < 0 or position.col < 0:
+            return False
+        return True
+
+    def letter_at(self, position):
+        if not position:
+            return None
+        if position.row not in self.letters:
+            return None
+        row = self.letters[position.row]
+        if position.col not in row:
+            return None
+        return row[position.col]
+
+    def set_letter_at(self, letter, position):
+        if not self.is_in_bounds(position):
+            raise Exception("Cannot place letter out of bounds")
+        if position.row not in self.letters:
+            self.letters[position.row] = {}
+        self.letters[position.row][position.col] = letter
+
+    def word_at(self, position):
+        position = position.copy()
+        while self.is_in_bounds(position) and self.letter_at(position):
+            position.step(-1)
+        posiion.step()
+        word = ""
+        while self.is_in_bounds(position) and self.letter_at(position):
+            word += self.letter_at(position)
+            position.step()
+        if len(word) <= 1:
+            return None
+        return word
+
+    def is_next_to_letter(self, position):
+        if (self.letter_at(position.up()) or
+            self.letter_at(position.down()) or
+            self.letter_at(position.left()) or
+            self.letter_at(position.right())):
+            return True
+        return False
+
+    def covers_start_square(self, position):
+        if position.row == 7 and position.col == 7: # TODO
+            return True
+        return False
+    
     def __init__(self, template):
-        pass
+        self.template = template.copy()
+        self.height = template.height
+        self.width = template.width
+        self.letters = {}
 
-class SBoardTemplate():
+class BoardTemplate():
     # Multiplier Types
     WORD_MULTIPLIER = "word_multiplier"
     LETTER_MULTIPLIER = "letter_multiplier"
+
+    def copy(self):
+        board = BoardTemplate()
+        board.copy_from(self)
+        return board
+
+    def copy_from(self, template):
+        self.id = template.id
+        self.width = template.width
+        self.height = template.height
+        self.multipliers = {}
+
+        for row in template.multipliers:
+            self.multipliers[row] = {}
+            for col in template.multipliers[row]:
+                self.multipliers[row][col] = {}
+                for multiplier_type in template.multipliers[row][col]:
+                    self.multipliers[row][col][multiplier_type] = template.multipliers[row][col][multiplier_type]
 
     def __init__(self, filename=None):
         self.id = filename
@@ -144,13 +393,16 @@ class SBoardTemplate():
         self.height = 0
         self.multipliers = {} # [row][col][type] => amt
 
+        if not filename:
+            return
+
         try:
             f = open(filename, 'r')
         except:
             print "Could not open board template: %s" % filename
             return
 
-        multiplier = self.WORD_MULTIPLIER
+        multiplier_type = self.WORD_MULTIPLIER
         ln = 0 # line number
         for line in f:
             line = line.strip()
@@ -159,7 +411,7 @@ class SBoardTemplate():
             if not line:
                 self.height = ln
                 ln = 0
-                multiplier = self.LETTER_MULTIPLIER
+                multiplier_type = self.LETTER_MULTIPLIER
                 continue
 
             cn = 0 # character number
@@ -168,17 +420,17 @@ class SBoardTemplate():
                     self.multipliers[ln] = {}
                 if cn not in self.multipliers[ln]:
                     self.multipliers[ln][cn] = {}
-                self.multipliers[ln][cn][multiplier] = int(ch)
+                self.multipliers[ln][cn][multiplier_type] = int(ch)
                 cn += 1
             ln += 1
 
-class SManager():
+class Manager():
     def create_id(self):
         self.num_ids += 1
         return self.num_ids
 
     def create_game(self, word_list=None, board=None, bag=None, setup=True):
-        game = SGame()
+        game = Game()
         game.id = self.create_id()
         self.games[game.id] = game
 
@@ -193,12 +445,12 @@ class SManager():
             game.use_word_list(self.word_lists[word_list])
             game.use_board_template(self.board_templates[board])
             game.use_bag_template(self.bag_templates[bag])
-            game.use_rules(SRules()) # TODO
+            game.use_rules(Rules()) # TODO
 
         return game
 
     def create_word_list(self, filename=None):
-        words = SWordList(filename)
+        words = WordList(filename)
         self.word_lists[words.id] = words
 
         if not self.default_word_list:
@@ -207,7 +459,7 @@ class SManager():
         return words
 
     def create_board_template(self, filename=None):
-        board = SBoardTemplate(filename)
+        board = BoardTemplate(filename)
         self.board_templates[board.id] = board
 
         if not self.default_board_template:
@@ -216,7 +468,7 @@ class SManager():
         return board
 
     def create_bag_template(self, filename=None):
-        bag = SBagTemplate(filename)
+        bag = BagTemplate(filename)
         self.bag_templates[bag.id] = bag
 
         if not self.default_bag_template:
@@ -237,16 +489,25 @@ class SManager():
         self.default_bag_template = None
 
 def main():
+    import optparse
     p = optparse.OptionParser()
     options, args = p.parse_args()
 
-    scrabble = SManager()
+    scrabble = Manager()
     scrabble.create_word_list('dictionaries/OSPD3.txt')
     scrabble.create_board_template('boards/wwfBoard.txt')
     scrabble.create_bag_template('bags/scrabbleBag.txt')
 
     game = scrabble.create_game()
     game.start()
+
+    print game.racks[0]
+
+    m = Move(Move.PLAY)
+    m.set_position(Position(7, 7, Position.DOWN))
+    m.set_letters("MA")
+    game.make_move(m)
+    print game.board.letters
 
 if __name__ == '__main__':
     main()
