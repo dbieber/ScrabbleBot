@@ -22,6 +22,13 @@ class Position():
             self.row += amount
         elif self.direction == self.ACROSS:
             self.col += amount
+        else:
+            raise Exception("Cannot step when position has no direction")
+
+    def switched_direction(self):
+        position = self.copy()
+        position.switch_direction()
+        return position
 
     def switch_direction(self):
         if self.direction == self.DOWN:
@@ -49,9 +56,6 @@ class Move():
     def set_position(self, position):
         self.position = position
 
-    def place_word_at(self, word, position, game=None):
-        pass # TODO
-
     def __init__(self, move_type=None, letters=None, position=None):
         self.move_type = move_type
         self.letters = letters
@@ -64,7 +68,7 @@ class Game():
                 if self.started:
                     print "Cannot %s once game has started" % msg
                     return
-                f(self, *args)
+                return f(self, *args)
             return wrapped_f
         return wrap
 
@@ -74,7 +78,7 @@ class Game():
                 if not self.started:
                     print "Cannot %s until game has started" % msg
                     return
-                f(self, *args)
+                return f(self, *args)
             return wrapped_f
         return wrap
 
@@ -85,12 +89,43 @@ class Game():
         elif move.move_type == Move.PLAY:
             if not self.__is_valid_move(move):
                 return
+            words = self.__get_words(move)
+            if self.rules.requires_real_words:
+                if not self.word_list.are_words(words):
+                    return
             self.__play_move(move)
+            # TODO: Update score
+            # TODO: Update history
+            # TODO: Check end game
+            self.__fill_rack(self.current_player)
             self.__next_turn()
         elif move.move_type == Move.RESIGN:
             self.finished = True
         elif move.move_type == Move.EXCHANGE:
-            pass
+            if not self.__player_has_letters(move.letters):
+                return # Invalid move exceptions!
+            rack = self.racks[self.current_player]
+            new_letters = self.bag.exchange_letters(move.letters)
+            for letter in move.letters:
+                rack.remove(letter)
+            rack.extend(new_letters)
+
+    def __player_has_letters(self, letters):
+        return set(letters) <= set(self.racks[self.current_player])
+
+    def __get_words(self, move):
+        position = move.position.copy()
+        board = self.board.copy()
+        words = []
+        for letter in move.letters:
+            while board.letter_at(position):
+                position.step()
+            board.set_letter_at(letter, position)
+            word = board.word_at(position.switched_direction())
+            if word:
+                words.append(word)
+        words.append(board.word_at(move.position))
+        return words
 
     def __play_move(self, move):
         position = move.position.copy()
@@ -101,9 +136,11 @@ class Game():
             self.racks[self.current_player].remove(letter)
 
     def __is_valid_move(self, move):
-        if not self.__is_valid_placement(move):
+        # Make sure player has the letters they're trying to play
+        if not self.__player_has_letters(move.letters):
             return False
-        if not (set(move.letters) <= set(self.racks[self.current_player])):
+        # Make sure placement is valid
+        if not self.__is_valid_placement(move):
             return False
         return True
 
@@ -160,7 +197,9 @@ class Game():
             return
         self.current_player = 0
         self.scores = [0] * self.rules.num_players
-        self.racks = [[]] * self.rules.num_players
+        self.racks = []
+        for i in xrange(self.rules.num_players):
+            self.racks.append([])
         self.started = True
 
         for i in xrange(self.rules.num_players):
@@ -172,7 +211,7 @@ class Game():
 
     def __fill_rack(self, player_num):
         rack = self.racks[player_num]
-        while len(rack) < self.rules.rack_size:
+        while len(rack) < self.rules.rack_size and not self.bag.is_empty():
             rack.append(self.bag.get_letter())
 
     def __init__(self):
@@ -200,6 +239,9 @@ class Rules():
     # After X turns
     END_GAME_TURNS = 2
 
+    def requires_real_words(self):
+        return self.challenge_mode == self.CHALLENGE_VALID_ONLY
+
     def __init__(self):
         self.num_players = 2
         self.challenge_mode = self.CHALLENGE_VALID_ONLY
@@ -215,6 +257,9 @@ class WordList():
 
     def is_word(self, word):
         return word in self.words
+
+    def are_words(self, words):
+        return all(self.is_word(word) for word in words)
 
     def __init__(self, filename=None):
         self.id = filename
@@ -245,6 +290,9 @@ class Bag():
             new_letters.append(self.get_letter())
         self.letters += letters
         return new_letters
+
+    def is_empty(self):
+        return len(self.letters) == 0
 
     def __fill(self):
         self.letters = []
@@ -336,7 +384,7 @@ class Board():
         position = position.copy()
         while self.is_in_bounds(position) and self.letter_at(position):
             position.step(-1)
-        posiion.step()
+        position.step()
         word = ""
         while self.is_in_bounds(position) and self.letter_at(position):
             word += self.letter_at(position)
@@ -358,10 +406,19 @@ class Board():
             return True
         return False
     
-    def __init__(self, template):
-        self.template = template.copy()
-        self.height = template.height
-        self.width = template.width
+    def copy(self):
+        board = Board(self.template)
+        for row in self.letters:
+            board.letters[row] = {}
+            for col in self.letters[row]:
+                board.letters[row][col] = self.letters[row][col]
+        return board
+
+    def __init__(self, template=None):
+        if template:
+            self.template = template.copy()
+            self.height = template.height
+            self.width = template.width
         self.letters = {}
 
 class BoardTemplate():
@@ -488,26 +545,3 @@ class Manager():
         self.default_board_template = None
         self.default_bag_template = None
 
-def main():
-    import optparse
-    p = optparse.OptionParser()
-    options, args = p.parse_args()
-
-    scrabble = Manager()
-    scrabble.create_word_list('dictionaries/OSPD3.txt')
-    scrabble.create_board_template('boards/wwfBoard.txt')
-    scrabble.create_bag_template('bags/scrabbleBag.txt')
-
-    game = scrabble.create_game()
-    game.start()
-
-    print game.racks[0]
-
-    m = Move(Move.PLAY)
-    m.set_position(Position(7, 7, Position.DOWN))
-    m.set_letters("MA")
-    game.make_move(m)
-    print game.board.letters
-
-if __name__ == '__main__':
-    main()
