@@ -1,6 +1,8 @@
+from time import time
 from scrabble import *
 from visualizers import *
 import optparse
+import bot
 
 def with_commands(cls):
     cls.commands = {}
@@ -59,6 +61,37 @@ class REPL():
     def alias(self, tokens):
         self.set_command(tokens[1], tokens[2])
 
+    @command('time')
+    def measure_time(self, tokens):
+        start_time = time()
+        self.exec_command(tokens[1:])
+        print "Done in %f seconds" % (time() - start_time)
+
+    @command('index')
+    def index(self, tokens):
+        if len(tokens) == 1:
+            self.index.set_word_list(self.game.word_list)
+        elif len(tokens) == 2:
+            self.index.index_words_with(size=int(tokens[1]))
+        else:
+            gaps = []
+            for token in tokens[2:]:
+                gaps.append(int(token))
+            self.index.index_words_with(size=int(tokens[1]), gaps_at=gaps)
+
+    @command('lookup')
+    def lookup(self, tokens):
+        if len(tokens) > 1:
+            print self.index.get_words_matching(tokens[1])
+
+    def exec_command(self, tokens):
+        cmd = tokens[0]
+        func = self.get_command(cmd)
+        if func:
+            func(self, tokens)
+        else:
+            print 'Command not found'
+
     def get_command(self, cmd):
         cmd = cmd.upper()
         if cmd in self.commands:
@@ -70,12 +103,7 @@ class REPL():
 
     def process_line(self, line):
         tokens = line.strip().split(' ')
-        cmd = tokens[0]
-        func = self.get_command(cmd)
-        if func:
-            func(self, tokens)
-        else:
-            print 'Command not found!'
+        self.exec_command(tokens)
 
     def eval_file(self, filename):
         f = open(filename, 'r')
@@ -98,6 +126,7 @@ class REPL():
         self.game = scrabble.create_game()
         self.game.start()
         self.move = None
+        self.index = bot.Index()
 
 def main():
     p = optparse.OptionParser()

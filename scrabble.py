@@ -20,10 +20,15 @@ class Position():
     def step(self, amount=1):
         if self.direction == self.DOWN:
             self.row += amount
+            return self
         elif self.direction == self.ACROSS:
             self.col += amount
+            return self
         else:
             raise Exception("Cannot step when position has no direction")
+
+    def has_direction(self):
+        return self.direction != None
 
     def switched_direction(self):
         position = self.copy()
@@ -81,6 +86,9 @@ class Game():
                 return f(self, *args)
             return wrapped_f
         return wrap
+
+    def copy_game(permissions=None):
+        return self # TODO
 
     @disallow_until_started("make move")
     def make_move(self, move):
@@ -379,6 +387,9 @@ class Board():
         if position.row not in self.letters:
             self.letters[position.row] = {}
         self.letters[position.row][position.col] = letter
+
+    def remove_letter_at(self, position):
+        self.set_letter_at(None, position)
 
     def word_at(self, position):
         position = position.copy()
