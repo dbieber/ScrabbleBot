@@ -1,3 +1,6 @@
+time index
+alias lu lookup
 alias p print
 alias x quit
 alias m move
+alias b bot

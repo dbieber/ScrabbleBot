@@ -3,6 +3,7 @@ from scrabble import *
 from visualizers import *
 import optparse
 import bot
+import cProfile
 
 def with_commands(cls):
     cls.commands = {}
@@ -37,11 +38,25 @@ class REPL():
 
     @command('move')
     def move(self, tokens):
-        self.move = Move(Move.PLAY)
-        self.move.set_letters(tokens[1].upper())
-        self.move.set_position(Position(int(tokens[2]), int(tokens[3]), int(tokens[4])))
+        if len(tokens) > 1:
+            self.move = Move(Move.PLAY)
+            self.move.set_letters(tokens[1].upper())
+            self.move.set_position(Position(int(tokens[2]), int(tokens[3]), int(tokens[4])))
+
         self.game.make_move(self.move)
 
+    @command('pass')
+    def pass_turn(self, tokens):
+        self.move = Move(Move.PASS)
+        self.game.make_move(self.move)
+
+    @command(['f', 'finish'])
+    def finish_game(self, tokens):
+        while not self.game.finished:
+            move = self.bot.get_move(self.game)
+            self.game.make_move(move)
+            if len(tokens) > 1 and tokens[1] == '-v':
+                self.print_game(None)
 
     @command('print')
     def print_game(self, tokens):
@@ -59,13 +74,17 @@ class REPL():
 
     @command('alias')
     def alias(self, tokens):
-        self.set_command(tokens[1], tokens[2])
+        self.create_alias(tokens[1], tokens[2:])
 
     @command('time')
     def measure_time(self, tokens):
         start_time = time()
         self.exec_command(tokens[1:])
         print "Done in %f seconds" % (time() - start_time)
+
+    @command('profile')
+    def profile(self, tokens):
+        cProfile.runctx('self.exec_command(tokens[1:])', globals(), locals())
 
     @command('index')
     def index(self, tokens):
@@ -79,12 +98,22 @@ class REPL():
                 gaps.append(int(token))
             self.index.index_words_with(size=int(tokens[1]), gaps_at=gaps)
 
+    @command(['bot'])
+    def best_move(self, tokens):
+        self.move = self.bot.get_move(self.game)
+
+    @command(['pm', 'print_move'])
+    def print_move(self, tokens):
+        print self.move
+
     @command('lookup')
     def lookup(self, tokens):
         if len(tokens) > 1:
             print self.index.get_words_matching(tokens[1])
 
     def exec_command(self, tokens):
+        if not tokens or not tokens[0]:
+            return
         cmd = tokens[0]
         func = self.get_command(cmd)
         if func:
@@ -98,12 +127,19 @@ class REPL():
             return self.commands[cmd]
         return None
 
-    def set_command(self, cmd, f_name):
-        self.commands[cmd.upper()] = self.get_command(f_name)
+    def create_alias(self, cmd_name, tokens):
+        def func(self, additional_tokens):
+            all_tokens = tokens
+            if len(additional_tokens) > 1:
+                all_tokens = tokens + additional_tokens[1:]
+            self.exec_command(all_tokens)
+        self.commands[cmd_name.upper()] = func
 
     def process_line(self, line):
-        tokens = line.strip().split(' ')
-        self.exec_command(tokens)
+        commands = line.strip().split(';')
+        for cmd in commands:
+            tokens = cmd.strip().split(' ')
+            self.exec_command(tokens)
 
     def eval_file(self, filename):
         f = open(filename, 'r')
@@ -127,36 +163,20 @@ class REPL():
         self.game.start()
         self.move = None
         self.index = bot.Index()
+        self.bot = bot.Bot(self.index)
 
 def main():
     p = optparse.OptionParser()
     options, args = p.parse_args()
 
     repl = REPL()
+    if args:
+        for arg in args:
+            repl.eval_file(arg)
+        return
+
     repl.eval_file('.scrabblerc')
     repl.start()
-
-
-    print game.racks[0]
-
-    m = Move(Move.EXCHANGE)
-    m.set_letters(game.racks[0][2:4])
-    game.make_move(m)
-
-    print game.racks[0]
-
-    m = Move(Move.PLAY)
-    m.set_position(Position(7, 7, Position.DOWN))
-    m.set_letters(game.racks[0][0:2])
-    game.make_move(m)
-
-    m = Move(Move.PLAY)
-    m.set_position(Position(6, 8, Position.DOWN))
-    m.set_letters(game.racks[1][0:2])
-    game.make_move(m)
-
-    TextVisualizer().visualize_board(game.board)
-    print game.racks[0]
 
 if __name__ == '__main__':
     main()

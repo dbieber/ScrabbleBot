@@ -11,7 +11,7 @@ wwfTopLeft = Image.open("rsrc/wwfTopLeft.png")
 shiftX = 223
 shiftY = 47
 
-wwfYourMove = Image.open("rsrc/yourMove.png")
+wwfYourMove = Image.open("rsrc/yourMove1.png")
 wwfYourMove2 = Image.open("rsrc/yourMove2.png")
 wwfClose = Image.open("rsrc/close.png")
 wwfSend = Image.open("rsrc/send.png")

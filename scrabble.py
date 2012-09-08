@@ -2,6 +2,11 @@ class Position():
     DOWN = 0
     ACROSS = 1
 
+    def copy_from(self, position):
+        self.row = position.row
+        self.col = position.col
+        self.direction = position.direction
+
     def copy(self):
         return Position(self.row, self.col, self.direction)
 
@@ -41,10 +46,16 @@ class Position():
         elif self.direction == self.ACROSS:
             self.direction = self.DOWN
 
+    def __eq__(self, other):
+        return self.row == other.row and self.col == other.col
+
     def __init__(self, row=None, col=None, direction=None):
         self.row = row
         self.col = col
         self.direction = direction
+
+    def __str__(self):
+        return "%d %d" % (self.row, self.col)
 
 class Move():
     PLAY = 0
@@ -65,6 +76,16 @@ class Move():
         self.move_type = move_type
         self.letters = letters
         self.position = position
+
+    def __str__(self):
+        if self.move_type == self.PLAY:
+            return "%s %d %d %d" % (self.letters, self.position.row, self.position.col, self.position.direction)
+        elif self.move_type == self.PASS:
+            return "PASS"
+        elif self.move_type == self.EXCHANGE:
+            return "Exchange %s" % self.letters
+        elif self.move_type == self.RESIGN:
+            return "RESIGN"
 
 class Game():
     def disallow_once_started(msg="do that"):
@@ -93,8 +114,13 @@ class Game():
     @disallow_until_started("make move")
     def make_move(self, move):
         if move.move_type == Move.PASS:
-            self.__next_turn()
+            self.consecutive_passes += 1
+            if self.consecutive_passes >= 2 * self.rules.num_players:
+                self.finished = True
+            else:
+                self.__next_turn()
         elif move.move_type == Move.PLAY:
+            self.consecutive_passes = 0
             if not self.__is_valid_move(move):
                 return
             words = self.__get_words(move)
@@ -110,6 +136,7 @@ class Game():
         elif move.move_type == Move.RESIGN:
             self.finished = True
         elif move.move_type == Move.EXCHANGE:
+            self.consecutive_passes = 0
             if not self.__player_has_letters(move.letters):
                 return # Invalid move exceptions!
             rack = self.racks[self.current_player]
@@ -117,6 +144,9 @@ class Game():
             for letter in move.letters:
                 rack.remove(letter)
             rack.extend(new_letters)
+
+    def current_rack(self):
+        return self.racks[self.current_player]
 
     def __player_has_letters(self, letters):
         return set(letters) <= set(self.racks[self.current_player])
@@ -234,6 +264,7 @@ class Game():
         self.racks = None
         self.started = False
         self.finished = False
+        self.consecutive_passes = 0
 
 class Rules():
     CHALLENGE_STANDARD = 0
@@ -241,7 +272,7 @@ class Rules():
     CHALLENGE_VALID_ONLY = 2
 
     # When a player empties their rack and the bag is empty
-    END_GAME_STANDARD = 0 
+    END_GAME_STANDARD = 0
     # When a player reaches X points
     END_GAME_POINTS = 1
     # After X turns
@@ -361,25 +392,25 @@ class BagTemplate():
                 value = int(line[2])
                 if line[0].upper() == 'BLANK':
                     letter = self.BLANK
-                self.add_letters(letter, amount, value)
+                if letter != self.BLANK:
+                    self.add_letters(letter, amount, value)
 
 class Board():
     def is_in_bounds(self, position):
-        if position.row > self.height or position.col > self.width:
+        if position.row >= self.height or position.col >= self.width:
             return False
         if position.row < 0 or position.col < 0:
             return False
         return True
 
     def letter_at(self, position):
-        if not position:
+        try:
+            return self.letters[position.row][position.col]
+        except:
             return None
-        if position.row not in self.letters:
-            return None
-        row = self.letters[position.row]
-        if position.col not in row:
-            return None
-        return row[position.col]
+
+    def get_center(self):
+        return Position(self.height / 2, self.width / 2)
 
     def set_letter_at(self, letter, position):
         if not self.is_in_bounds(position):
@@ -388,20 +419,40 @@ class Board():
             self.letters[position.row] = {}
         self.letters[position.row][position.col] = letter
 
+    def step_until_empty(self, position, amount=1):
+        position.step(amount)
+        while self.letter_at(position) and self.is_in_bounds(position):
+            position.step(amount)
+        return self.is_in_bounds(position)
+
     def remove_letter_at(self, position):
         self.set_letter_at(None, position)
 
     def word_at(self, position):
-        position = position.copy()
-        while self.is_in_bounds(position) and self.letter_at(position):
-            position.step(-1)
-        position.step()
-        word = ""
-        while self.is_in_bounds(position) and self.letter_at(position):
-            word += self.letter_at(position)
-            position.step()
+        left_pos = position.copy()
+        right_pos = position.copy()
+
+        left_word = [] # Backwards
+        letter = self.letter_at(left_pos)
+        while letter:
+            left_word.append(letter)
+            left_pos.step(-1)
+            letter = self.letter_at(left_pos)
+        left_word.reverse()
+
+        right_pos.step()
+        right_word = []
+        letter = self.letter_at(right_pos)
+        while letter:
+            right_word.append(letter)
+            right_pos.step()
+            letter = self.letter_at(right_pos)
+
+        word = "".join(left_word + right_word)
+
         if len(word) <= 1:
             return None
+
         return word
 
     def is_next_to_letter(self, position):
@@ -413,7 +464,7 @@ class Board():
         return False
 
     def covers_start_square(self, position):
-        if position.row == 7 and position.col == 7: # TODO
+        if position == self.get_center():
             return True
         return False
     
@@ -424,6 +475,12 @@ class Board():
             for col in self.letters[row]:
                 board.letters[row][col] = self.letters[row][col]
         return board
+
+    def letter_multiplier_at(self, position):
+        return self.template.letter_multiplier_at(position)
+
+    def word_multiplier_at(self, position):
+        return self.template.word_multiplier_at(position)
 
     def __init__(self, template=None):
         if template:
@@ -454,6 +511,19 @@ class BoardTemplate():
                 self.multipliers[row][col] = {}
                 for multiplier_type in template.multipliers[row][col]:
                     self.multipliers[row][col][multiplier_type] = template.multipliers[row][col][multiplier_type]
+
+    def letter_multiplier_at(self, position):
+        try:
+            return self.multipliers[position.row][position.col][self.LETTER_MULTIPLIER]
+        except:
+            return 1
+
+    def word_multiplier_at(self, position):
+        try:
+            return self.multipliers[position.row][position.col][self.WORD_MULTIPLIER]
+        except:
+            return 1
+
 
     def __init__(self, filename=None):
         self.id = filename
