@@ -1,7 +1,9 @@
+from __future__ import print_function
+
 from time import time
 from random import shuffle, sample
 import tumblr
-import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import boardGrab
 import tkFont
 
@@ -136,7 +138,7 @@ def printCrossword(move=None):
                 letter = default
             if blankAt(row, col):
                 letter = letter.lower()
-            print(letter,)
+            print(letter, end=' ')
         print()
 def blankAt(row, col):
     if not board:
@@ -442,7 +444,7 @@ def bestMove():
             # print(bMove)
             return bMove
 
-    # print("Solving:",)
+    # print("Solving:", end=' ')
     startTime = time()
 
     noLetters = True
@@ -462,28 +464,28 @@ def bestMove():
                 if not letterAt(row+1, col):
                     newMove = bestMoveAt(row+1, col)
                     if newMove[0]>bestScore:
-                        # print(newMove[1],)
+                        # print(newMove[1], end=' ')
                         move = newMove
                         bestScore = newMove[0]
                 if not letterAt(row, col-1):
                     newMove = bestMoveAt(row, col-1)
                     if newMove[0]>bestScore:
-                        # print(newMove[1],)
+                        # print(newMove[1], end=' ')
                         move = newMove
                         bestScore = newMove[0]
                 if not letterAt(row, col+1):
                     newMove = bestMoveAt(row, col+1)
                     if newMove[0]>bestScore:
-                        # print(newMove[1],)
+                        # print(newMove[1], end=' ')
                         move = newMove
                         bestScore = newMove[0]
     if noLetters:
         move = bestMoveAt(int(HEIGHT/2), int(WIDTH/2), False)
-        # print(newMove[1],)
+        # print(newMove[1], end=' ')
     if move and move[0]:
-        print("(%d)" % move[0],)
+        print("(%d)" % move[0], end=' ')
     else:
-        print("No moves.",)
+        print("No moves.", end=' ')
         move = None
     #print("Done in %f seconds" % (time()-startTime))
     return move
@@ -611,11 +613,11 @@ def newGame():
 
 def initDictionary(): #TODO make 2 letter word list
     global dictionary
-    del dictionary
-    global dictionary
+    # del dictionary
+    # global dictionary
     dictionary = {}
     if dictionarySource:
-        print("Initializing Dictionary:",)
+        print("Initializing Dictionary:", end=' ')
         startTime = time()
 
         try:
@@ -645,7 +647,7 @@ def initBoard():
     board = {}
     WIDTH = 0
     HEIGHT = 0
-    print("Initializing Board:",)
+    print("Initializing Board:", end=' ')
     startTime = time()
 
     if boardSource:
@@ -679,7 +681,7 @@ def initBoard():
             ln+=1
     print("Done in %f seconds" % (time()-startTime))
 def initBagTemplate():
-    print("Initializing Bag Template:",)
+    print("Initializing Bag Template:", end=' ')
     startTime = time()
 
     def s(ch, amt, val):
@@ -733,7 +735,7 @@ def initBagTemplate():
 
     print("Done in %f seconds" % (time()-startTime))
 def initStatistics():
-    print("Initializing new Statistics:",)
+    print("Initializing new Statistics:", end=' ')
     startTime = time()
 
     global statistics
@@ -831,7 +833,7 @@ def gatherStats():
         writeStats()
         print("Game %d; %d moves made" % (statistics[GAMES_PLAYED], statistics[MOVES_MADE]))
 def loadStats():
-    print("Loading Stats:",)
+    print("Loading Stats:", end=' ')
     initStatistics()
     f = open(STATISTICS_SOURCE, 'r')
     global statistics
@@ -840,12 +842,12 @@ def loadStats():
         statistics[AMOUNT][line[0]] = int(line[1])
         statistics[VALUE][line[0]] = int(line[2])
     f.close()
-    print("Done",)
+    print("Done", end=' ')
 def setStatSource(tokens):
     global STATISTICS_SOURCE
     STATISTICS_SOURCE = tokens[2]
 def addStats():
-    print("Aggregating Stats:",)
+    print("Aggregating Stats:", end=' ')
     f = open(STATISTICS_SOURCE, 'r')
     global statistics
     for line in f:
@@ -857,7 +859,7 @@ def addStats():
         statistics[VALUE][line[0]] += int(line[2])
 
     f.close()
-    print("Done",)
+    print("Done", end=' ')
 def writeStats():
     f = open(STATISTICS_SOURCE, 'w')
     for i in statistics[AMOUNT]:
@@ -865,7 +867,7 @@ def writeStats():
     f.close()
 
 def simulateGame():
-    print("Simulating Game:",)
+    print("Simulating Game:", end=' ')
     startTime = time()
     totalSkips = 0
     global gameOver, currentPlayer
@@ -922,7 +924,7 @@ def startCMD():
     #registerCommand(lookup, ['L', 'LU', 'LOOKUP'])
     move = None
     while True:
-        print('>>>',)
+        print('>>>', end=' ')
         tokens = raw_input().strip().split(' ')
         cmd = tokens[0].upper()
         if cmd == 'QUIT':

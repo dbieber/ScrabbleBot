@@ -3,3 +3,4 @@ temp*
 data
 credentials.py
 *~
+secure_settings.py

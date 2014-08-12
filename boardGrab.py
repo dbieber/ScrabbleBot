@@ -1,7 +1,16 @@
 from sys import argv
-import Image
-import ImageGrab
-import win32api, win32con
+from PIL import Image
+
+try:
+	from PIL import ImageGrab
+except:
+	print("Can't import ImageGrab")
+
+try:
+	import win32api, win32con
+except Exception, e:
+	print("Can't import win32api, win32con")
+
 import time
 
 wwfTopLeft = Image.open("rsrc/wwfTopLeft.png")

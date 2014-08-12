@@ -1,11 +1,13 @@
-from credentials import TUMBLR_PASS
+from __future__ import absolute_import
+
+from settings.secure_settings import TUMBLR_PASS
 from urllib import urlencode
 from urllib2 import urlopen
 
 email = 'pyscrabble@gmail.com'
 password = TUMBLR_PASS
 generator = 'PyScrabble'
-writeURL = 'http://www.tumblr.com/api/write' 
+writeURL = 'http://www.tumblr.com/api/write'
 sendToTwitter = 'auto'
 
 def postToTumblr(title, text):
@@ -19,9 +21,9 @@ def postToTumblr(title, text):
         'tags': 'bot, scrabble',
         'send-to-twitter': sendToTwitter
     }
-    
+
     urlopen(writeURL, urlencode(postData))
-    
+
 def imageToTumblr(caption, imgsrc):
     postData = {
         'type': 'photo',
