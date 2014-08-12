@@ -975,6 +975,9 @@ def startCMD():
             writeStats()
         elif cmd == 'VIEW_STATS':
             log(statistics)
+        elif cmd == 'RELOAD':
+            reload(tumblr)
+            reload(boardGrab)
         elif cmd == 'HATS_':
             printHats()
         elif cmd == 'L' or cmd == 'LU' or cmd == 'LOOKUP':

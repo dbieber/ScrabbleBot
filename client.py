@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from time import time
 from scrabble import *
 from visualizers import *
@@ -148,7 +150,7 @@ class REPL():
 
     def start(self):
         while True:
-            print('>>>',)
+            print('>>>', end=' ')
             line = raw_input()
             self.process_line(line)
 
