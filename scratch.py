@@ -5,7 +5,6 @@ from random import shuffle, sample
 import tumblr
 from PIL import Image, ImageDraw, ImageFont
 import boardGrab
-import tkFont
 
 #TODO put things in classes to eliminate globals
 FONT_SOURCE = "rsrc/font.pil"
