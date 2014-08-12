@@ -932,9 +932,6 @@ def printHats():
 
 def startCMD():
     global currentPlayer, dictionarySource, boardSource, RACK_SIZE, NUM_PLAYERS, HANDLE_BLANK_TILES
-    #TODO:
-    #registerCommand(simulateGame, ['SIM', 'SIMULATE'])
-    #registerCommand(lookup, ['L', 'LU', 'LOOKUP'])
     move = None
     while True:
         log('>>>', end=' ')
@@ -1048,10 +1045,10 @@ def startCMD():
         elif cmd == 'REFILL':
             fillBag()
         elif cmd == 'E' or cmd == 'EXCHANGE':
-            if len(tokens) > 1: #TODO allow player to specify which tiles get exchanged
+            if len(tokens) > 1:  # TODO(Bieber) allow player to specify which tiles get exchanged
                 amt = int(tokens[1].upper())
                 keep = len(racks[currentPlayer]) - amt
-                racks[currentPlayer] = sample(racks[currentPlayer], keep) #TODO place removed tiles back in bag
+                racks[currentPlayer] = sample(racks[currentPlayer], keep)  # TODO(Bieber) place removed tiles back in bag
             else:
                 racks[currentPlayer] = []
             fillRack(currentPlayer)

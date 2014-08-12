@@ -13,6 +13,9 @@ tumblr = pytumblr.TumblrRestClient(
 
 def imageToTumblr(caption, imgsrc):
     tumblr.create_photo(
+        'scrabblebot',
+        state='published',
         caption=caption,
+        tags=['bot', 'scrabble'],
         data=TUMBLR_IMAGE_PATH,
     )
