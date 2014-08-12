@@ -6,5 +6,5 @@ class TextVisualizer():
                 letter = board.letter_at(Position(row,col))
                 if not letter:
                     letter = ' '
-                print letter,
-            print
+                print(letter,)
+            print()

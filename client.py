@@ -23,14 +23,14 @@ class REPL():
             f.commands = names
             return f
         return wrap
-    
+
     @command(['quit', 'exit'])
     def quit(self, tokens):
         exit()
 
     @command('hjkl')
     def hjkl(self, tokens):
-        print 'vim mode ACTIVATED!!!'
+        print('vim mode ACTIVATED!!!')
         import random
         if random.random() < 0.001:
             import vimmode
@@ -60,17 +60,17 @@ class REPL():
 
     @command('print')
     def print_game(self, tokens):
-        print self.game.racks[0], self.game.racks[1]
-        print self.game.current_player
+        print(self.game.racks[0], self.game.racks[1])
+        print(self.game.current_player)
         TextVisualizer().visualize_board(self.game.board)
 
     @command('id')
     def print_game_id(self, tokens):
-        print self.game.id
+        print(self.game.id)
 
     @command('commands')
     def list_commands(self, tokens):
-        print self.commands
+        print(self.commands)
 
     @command('alias')
     def alias(self, tokens):
@@ -80,7 +80,7 @@ class REPL():
     def measure_time(self, tokens):
         start_time = time()
         self.exec_command(tokens[1:])
-        print "Done in %f seconds" % (time() - start_time)
+        print("Done in %f seconds" % (time() - start_time))
 
     @command('profile')
     def profile(self, tokens):
@@ -104,12 +104,12 @@ class REPL():
 
     @command(['pm', 'print_move'])
     def print_move(self, tokens):
-        print self.move
+        print(self.move)
 
     @command('lookup')
     def lookup(self, tokens):
         if len(tokens) > 1:
-            print self.index.get_words_matching(tokens[1])
+            print(self.index.get_words_matching(tokens[1]))
 
     def exec_command(self, tokens):
         if not tokens or not tokens[0]:
@@ -119,7 +119,7 @@ class REPL():
         if func:
             func(self, tokens)
         else:
-            print 'Command not found'
+            print('Command not found')
 
     def get_command(self, cmd):
         cmd = cmd.upper()
@@ -148,7 +148,7 @@ class REPL():
 
     def start(self):
         while True:
-            print '>>>',
+            print('>>>',)
             line = raw_input()
             self.process_line(line)
 
@@ -158,7 +158,7 @@ class REPL():
         scrabble.create_word_list('dictionaries/OSPD3.txt')
         scrabble.create_board_template('boards/wwfBoard.txt')
         scrabble.create_bag_template('bags/scrabbleBag.txt')
-        
+
         self.game = scrabble.create_game()
         self.game.start()
         self.move = None

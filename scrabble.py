@@ -92,7 +92,7 @@ class Game():
         def wrap(f):
             def wrapped_f(self, *args):
                 if self.started:
-                    print "Cannot %s once game has started" % msg
+                    print("Cannot %s once game has started" % msg)
                     return
                 return f(self, *args)
             return wrapped_f
@@ -102,7 +102,7 @@ class Game():
         def wrap(f):
             def wrapped_f(self, *args):
                 if not self.started:
-                    print "Cannot %s until game has started" % msg
+                    print("Cannot %s until game has started" % msg)
                     return
                 return f(self, *args)
             return wrapped_f
@@ -220,18 +220,18 @@ class Game():
     @disallow_once_started("start game")
     def start(self):
         if not self.id:
-            print "Starting game without an id!"
+            print("Starting game without an id!")
         if not self.board or not isinstance(self.board, Board):
-            print "Cannot start without board"
+            print("Cannot start without board")
             return
         if not self.bag or not isinstance(self.bag, Bag):
-            print "Cannot start without bag"
+            print("Cannot start without bag")
             return
         if not self.rules or not isinstance(self.rules, Rules):
-            print "Cannot start without rules"
+            print("Cannot start without rules")
             return
         if not self.word_list or not isinstance(self.word_list, WordList):
-            print "Cannot start without word list"
+            print("Cannot start without word list")
             return
         self.current_player = 0
         self.scores = [0] * self.rules.num_players
@@ -307,7 +307,7 @@ class WordList():
         try:
             f = open(filename, 'r')
         except:
-            print "Could not open dictionary: %s" % filename
+            print("Could not open dictionary: %s" % filename)
             return
         for line in f:
             word = line.strip().upper()
@@ -381,7 +381,7 @@ class BagTemplate():
         try:
             f = open(filename, 'r')
         except:
-            print "Could not open bag template: %s" % filename
+            print("Could not open bag template: %s" % filename)
             return
 
         for line in f:
@@ -467,7 +467,7 @@ class Board():
         if position == self.get_center():
             return True
         return False
-    
+
     def copy(self):
         board = Board(self.template)
         for row in self.letters:
@@ -537,7 +537,7 @@ class BoardTemplate():
         try:
             f = open(filename, 'r')
         except:
-            print "Could not open board template: %s" % filename
+            print("Could not open board template: %s" % filename)
             return
 
         multiplier_type = self.WORD_MULTIPLIER
