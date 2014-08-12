@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
 from settings.secure_settings import TUMBLR_PASS
 from urllib import urlencode
@@ -25,6 +26,7 @@ def postToTumblr(title, text):
     urlopen(writeURL, urlencode(postData))
 
 def imageToTumblr(caption, imgsrc):
+    print('Posting image', caption, imgsrc)
     postData = {
         'type': 'photo',
         'email': email,
@@ -37,6 +39,6 @@ def imageToTumblr(caption, imgsrc):
     }
     postData = urlencode(postData)
     try:
-        urlopen(writeURL, postData)
-    except:
-        pass
+        response = urlopen(writeURL, postData)
+    except Exception as e:
+        print(e)
