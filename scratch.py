@@ -1,12 +1,16 @@
+from __future__ import absolute_import
 from __future__ import print_function
 
-from time import time
-from random import shuffle, sample
-import tumblr
 from PIL import Image, ImageDraw, ImageFont
-import boardGrab
+from random import shuffle, sample
+from settings.secure_settings import TUMBLR_IMAGE_PATH
+from settings.secure_settings import TUMBLR_IMAGE_URL
+from time import time
 
-#TODO put things in classes to eliminate globals
+import boardGrab
+import tumblr
+
+# TODO(Bieber) put things in classes to eliminate globals
 FONT_SOURCE = "rsrc/font.pil"
 TILE_IMAGE_SOURCE = "rsrc/sprites.png"
 STATISTICS_SOURCE = "data/statsOSPD3.txt"
@@ -35,7 +39,7 @@ VALUE = 'value'
 BLANK = '_'
 
 dictionary = {}
-statistics = {} #_AMOUNT, _VALUE, _GAMES_PLAYED, _MOVES_MADE
+statistics = {} # _AMOUNT, _VALUE, _GAMES_PLAYED, _MOVES_MADE
 GAMES_PLAYED = 'games_played'
 MOVES_MADE = 'moves_made'
 board = {}
@@ -80,7 +84,7 @@ def colorOfSquare(row, col):
 
 def boardImage():
     img = Image.new("RGB", (500, 500), "#FFFFFF")
-    #squares 32*32 = 480 across with 10px border
+    # squares 32*32 = 480 across with 10px border
     draw = ImageDraw.Draw(img)
 
     draw.rectangle([9,9,491,491], fill="#000000")
@@ -111,16 +115,20 @@ def boardImage():
                 img.paste(tileImg,(l1, t1, l1+x, t1+y))
     return img
 
-def printAll(move=None): #TODO make wrappers for print so that we can turn printing on/off with global toggle
-    print("***Player %d's Turn***" % (currentPlayer+1))
+def log(*args, **kwargs):
+    print(*args, **kwargs)
 
-    print('Crossword:')
+def printAll(move=None):
+    log("***Player %d's Turn***" % (currentPlayer+1))
+
+    log('Crossword:')
     printCrossword(move)
 
-    print('Racks:')
+    log('Racks:')
     for p in range(NUM_PLAYERS):
-        print("%d: %s" % ((p+1), ", ".join(racks[p])))
-    print()
+        log("%d: %s" % ((p+1), ", ".join(racks[p])))
+    log()
+
 def printCrossword(move=None):
     for row in board:
         for col in board[row]:
@@ -137,8 +145,9 @@ def printCrossword(move=None):
                 letter = default
             if blankAt(row, col):
                 letter = letter.lower()
-            print(letter, end=' ')
-        print()
+            log(letter, end=' ')
+        log()
+
 def blankAt(row, col):
     if not board:
         return False
@@ -151,10 +160,10 @@ def blankAt(row, col):
     letter = board[row][col][LETTER]
     if letter and letter[0] == BLANK:
         return True
+
 def inBounds(row, col):
-    if row>=0 and row<HEIGHT and col>=0 and col<WIDTH:
-        return True
-    return False
+    return row >= 0 and row < HEIGHT and col >= 0 and col < WIDTH
+
 def letterAt(row, col, trimBlank=True):
     if not board:
         return None
@@ -168,6 +177,7 @@ def letterAt(row, col, trimBlank=True):
     if trimBlank and letter and letter[0] == BLANK:
         return letter[1]
     return letter
+
 def letterAtInMove(move, row, col, trimBlank=True):
     if not move:
         return None
@@ -179,6 +189,7 @@ def letterAtInMove(move, row, col, trimBlank=True):
     if trimBlank and letter and letter[0] == BLANK:
         return letter[1]
     return letter
+
 def isWord(word):
     word = word.upper()
     if word[:3] in dictionary:
@@ -186,16 +197,18 @@ def isWord(word):
         if word in dict:
             return True
         else:
-            # print("%s isn't a word" % word)
+            # log("%s isn't a word" % word)
             return False
     else:
-        # print("%s isn't a word" % word)
+        # log("%s isn't a word" % word)
         return False
+
 def isWordAt(move, row, col, vert):
     word = textAt(row, col, vert, move)
     if len(word) >= 2:
         return isWord(word)
-    return True #Too short to be word
+    return True # Too short to be word
+
 def isPotentialWordAt(move, row, col, vert):
     word = textAt(row, col, vert, move)
     ln = len(word)
@@ -207,6 +220,7 @@ def isPotentialWordAt(move, row, col, vert):
             if key not in dictionary:
                 return False
     return True
+
 def textAt(row, col, vert, move=None, trimBlank=True):
     def f(row, col):
         letter = letterAtInMove(move, row, col, trimBlank)
@@ -214,6 +228,7 @@ def textAt(row, col, vert, move=None, trimBlank=True):
             letter = letterAt(row, col, trimBlank)
         return letter
     return mapToText(row, col, vert, f, ''.join, move)
+
 def getWordScore(row, col, vert, move=None):
     def f(row, col):
         letterMult = 1
@@ -228,6 +243,7 @@ def getWordScore(row, col, vert, move=None):
             letter = letterAt(row, col, False)
         val = bagTemplate[letter[0]][VALUE]
         return (val*letterMult, wordMult, tiles)
+
     def g(results):
         count = 0
         total, prod = 0, 1
@@ -262,7 +278,7 @@ def mapToText(row, col, vert, f, g=None, move=None):
 
 def isValid(move):
     if gameOver:
-        print("Cannot play move. Type newgame to start a new game.")
+        log("Cannot play move. Type newgame to start a new game.")
         return False
     if not move:
         return False
@@ -276,8 +292,8 @@ def isValid(move):
     letterCounts = {}
     for row in move:
         if row < 0 or row >= HEIGHT:
-            print("Invalid: Move out of bounds")
-            return False #Invalid: Move out of bounds
+            log("Invalid: Move out of bounds")
+            return False # Invalid: Move out of bounds
         if initRow == -1:
             initRow = row
         if row != initRow:
@@ -286,8 +302,8 @@ def isValid(move):
             topLeftRow = row
         for col in move[row]:
             if col < 0 or col >= WIDTH:
-                print("Invalid: Move out of bounds")
-                return False #Invalid: Move out of bounds
+                log("Invalid: Move out of bounds")
+                return False # Invalid: Move out of bounds
             if initCol == -1:
                 initCol = col
             if col != initCol:
@@ -298,48 +314,48 @@ def isValid(move):
             letter = move[row][col][0]
             if letter not in letterCounts:
                 letterCounts[letter] = 0
-            letterCounts[letter]+=1
+            letterCounts[letter] += 1
 
             if letterAt(row, col):
-                print("Invalid: Overlaps existing word")
-                return False #Invalid: Overlaps existing word
+                log("Invalid: Overlaps existing word")
+                return False # Invalid: Overlaps existing word
             if (letterAt(row+1, col) or
                 letterAt(row-1, col) or
                 letterAt(row, col+1) or
                 letterAt(row, col-1) or
-                (row == int(HEIGHT/2) and col == int(WIDTH/2))):
+                (row == int(HEIGHT / 2) and col == int(WIDTH / 2))):
                 continuesPuzzle = True
 
     if REQUIRE_REAL_WORDS:
         for row in move:
             for col in move[row]:
                 if twoRows:
-                    if not isWordAt(move, row, col, False): #Horizontal
-                        print("Invalid word")
-                        return False #Invalid word
+                    if not isWordAt(move, row, col, False): # Horizontal
+                        log("Invalid word")
+                        return False # Invalid word
                 if twoCols:
-                    if not isWordAt(move, row, col, True): #Horizontal
-                        print("Invalid word2")
-                        return False #Invalid word
+                    if not isWordAt(move, row, col, True): # Horizontal
+                        log("Invalid word2")
+                        return False # Invalid word
         if not twoRows:
-            if not isWordAt(move, row, col, False): #Horizontal
-                print("Invalid word")
-                return False #Invalid word
+            if not isWordAt(move, row, col, False): # Horizontal
+                log("Invalid word")
+                return False # Invalid word
         if not twoCols:
             if not isWordAt(move, row, col, True): #Horizontal
-                print("Invalid word2")
-                return False #Invalid word
+                log("Invalid word2")
+                return False # Invalid word
 
     for letter in letterCounts:
         if racks[currentPlayer].count(letter) < letterCounts[letter]:
-            print("Invalid: You don't have the tiles to make that move",racks[currentPlayer],letter,letterCounts)
-            return False #Invalid: You don't have the tiles to make that move
+            log("Invalid: You don't have the tiles to make that move",racks[currentPlayer],letter,letterCounts)
+            return False # Invalid: You don't have the tiles to make that move
     if twoRows and twoCols:
-        print("Invalid: Can only play along one row or one col")
-        return False #Invalid: Can only play along one row or one col
+        log("Invalid: Can only play along one row or one col")
+        return False # Invalid: Can only play along one row or one col
     if not continuesPuzzle:
-        print("Invalid: Must be placed over center square or attached to crossword")
-        return False #Invalid: Must be placed over center square or attached to crossword
+        log("Invalid: Must be placed over center square or attached to crossword")
+        return False # Invalid: Must be placed over center square or attached to crossword
     return True
 
 def searchedAlready(row, col, vert, makeSearched=False):
@@ -358,8 +374,8 @@ def searchedAlready(row, col, vert, makeSearched=False):
     return False
 
 def bestMoveAt(row, col, vert=None, move={}, used=[], prevAllowed=True):
-    # if row==9 and col==13:#################################################REMOVE
-        # print(vert,move,used)
+    # if row==9 and col==13: # TODO(Bieber): REMOVE
+        # log(vert,move,used)
     if vert==None:
         move1 = bestMoveAt(row, col, True, move, used, prevAllowed)
         move2 = bestMoveAt(row, col, False, move, used, prevAllowed)
@@ -369,10 +385,10 @@ def bestMoveAt(row, col, vert=None, move={}, used=[], prevAllowed=True):
             return move2
 
     if not inBounds(row, col):
-        return (0, {}, (-1, -1)) #TODO return None instead
+        return (0, {}, (-1, -1)) # TODO(Bieber) return None instead
 
     if searchedAlready(row, col, vert, not used):
-        return (0, {}, (-1, -1)) #TODO make sure we haven't already exhausted search of this square in this direction
+        return (0, {}, (-1, -1)) # TODO(Bieber) make sure we haven't already exhausted search of this square in this direction
 
     bestScore = 0
     bestMove = {}
@@ -396,7 +412,7 @@ def bestMoveAt(row, col, vert=None, move={}, used=[], prevAllowed=True):
         pos.incr(1)
         while letterAt(pos.row, pos.col) or letterAtInMove(move, pos.row, pos.col):
             pos.incr(1)
-        (score, okMove, position) = bestMoveAt(pos.row, pos.col, vert, move, used, False) #Can't go back
+        (score, okMove, position) = bestMoveAt(pos.row, pos.col, vert, move, used, False) # Can't go back
 
         if prevAllowed:
             pos = DirectedPosition(row, col, vert)
@@ -426,6 +442,7 @@ def bestMoveAt(row, col, vert=None, move={}, used=[], prevAllowed=True):
         removeTile(move, row, col)
 
     return (bestScore, bestMove, bestPosition)
+
 def bestMove():
     global searched
     searched = {}
@@ -440,10 +457,10 @@ def bestMove():
                     bMove = move
                 racks[currentPlayer].remove(BLANK+letter)
                 racks[currentPlayer].append(BLANK)
-            # print(bMove)
+            # log(bMove)
             return bMove
 
-    # print("Solving:", end=' ')
+    # log("Solving:", end=' ')
     startTime = time()
 
     noLetters = True
@@ -457,49 +474,50 @@ def bestMove():
                 if not letterAt(row-1, col):
                     newMove = bestMoveAt(row-1, col)
                     if newMove[0]>bestScore:
-                        # print(newMove[0],newMove[1],newMove[2])
+                        # log(newMove[0],newMove[1],newMove[2])
                         move = newMove
                         bestScore = newMove[0]
                 if not letterAt(row+1, col):
                     newMove = bestMoveAt(row+1, col)
                     if newMove[0]>bestScore:
-                        # print(newMove[1], end=' ')
+                        # log(newMove[1], end=' ')
                         move = newMove
                         bestScore = newMove[0]
                 if not letterAt(row, col-1):
                     newMove = bestMoveAt(row, col-1)
                     if newMove[0]>bestScore:
-                        # print(newMove[1], end=' ')
+                        # log(newMove[1], end=' ')
                         move = newMove
                         bestScore = newMove[0]
                 if not letterAt(row, col+1):
                     newMove = bestMoveAt(row, col+1)
                     if newMove[0]>bestScore:
-                        # print(newMove[1], end=' ')
+                        # log(newMove[1], end=' ')
                         move = newMove
                         bestScore = newMove[0]
     if noLetters:
         move = bestMoveAt(int(HEIGHT/2), int(WIDTH/2), False)
-        # print(newMove[1], end=' ')
+        # log(newMove[1], end=' ')
     if move and move[0]:
-        print("(%d)" % move[0], end=' ')
+        log("(%d)" % move[0], end=' ')
     else:
-        print("No moves.", end=' ')
+        log("No moves.", end=' ')
         move = None
-    #print("Done in %f seconds" % (time()-startTime))
+    # log("Done in %f seconds" % (time()-startTime))
     return move
 
 def changeTurn():
     global currentPlayer
-    currentPlayer+=1
-    currentPlayer%=NUM_PLAYERS
+    currentPlayer += 1
+    currentPlayer %= NUM_PLAYERS
+
 def playMove(move):
     if isValid(move):
         oneRow = True
         oneCol = True
         firstRow = -1
         firstCol = -1
-        #Place tiles, removing them from rack
+        # Place tiles, removing them from rack
         for row in move:
             if firstRow == -1:
                 firstRow = row
@@ -514,7 +532,7 @@ def playMove(move):
                 racks[currentPlayer].remove(move[row][col][0])
                 board[row][col][LETTER] = move[row][col]
 
-        #Add up score
+        # Add up score
         score = 0
         for row in move:
             for col in move[row]:
@@ -529,21 +547,22 @@ def playMove(move):
 
         scores[currentPlayer] += score
 
-        #Refill rack
+        # Refill rack
         fillRack(currentPlayer)
 
-        #Handle endgame if necessary
+        # Handle endgame if necessary
         if not racks[currentPlayer]:
             global gameOver
             gameOver = True
 
-        #Change currentPlayer
+        # Change currentPlayer
         changeTurn()
 
         return True
     else:
-        print("Invalid move")
+        log("Invalid move")
         return False
+
 def placeWord(move, row, col, vert, word):
     word = word.upper()
     pos = DirectedPosition(row, col, vert)
@@ -557,6 +576,7 @@ def placeWord(move, row, col, vert, word):
 
         pos.incr(1)
         i+=1
+
 def placeTile(move, row, col, ch):
     if move == None:
         return
@@ -565,6 +585,7 @@ def placeTile(move, row, col, ch):
     if row not in move:
         move[row] = {}
     move[row][col] = ch
+
 def removeTile(move, row, col):
     if move==None:
         return
@@ -572,6 +593,7 @@ def removeTile(move, row, col):
         del move[row][col]
         if not move[row]:
             del move[row]
+
 def fillRack(p):
     while bag and len(racks[p]) < RACK_SIZE:
         racks[p].append(bag.pop())
@@ -579,14 +601,17 @@ def fillRack(p):
 def fillRacks():
     for p in range(NUM_PLAYERS):
         fillRack(p)
+
 def clearRacks():
     for p in range(NUM_PLAYERS):
         racks[p] = []
+
 def clearBoard():
     for row in board:
         for col in board[row]:
             tile = board[row][col]
             tile[LETTER] = None
+
 def fillBag():
     for i in range(len(bag)):
         bag.pop()
@@ -597,9 +622,11 @@ def fillBag():
             amt-=1
 
     shuffle(bag)
+
 def resetScores():
     for p in range(NUM_PLAYERS):
         scores[p] = 0
+
 def newGame():
     global gameOver
     clearBoard()
@@ -610,26 +637,26 @@ def newGame():
     currentPlayer = 0
     gameOver = False
 
-def initDictionary(): #TODO make 2 letter word list
+def initDictionary(): # TODO(Bieber): make 2 letter word list
     global dictionary
     # del dictionary
     # global dictionary
     dictionary = {}
     if dictionarySource:
-        print("Initializing Dictionary:", end=' ')
+        log("Initializing Dictionary:", end=' ')
         startTime = time()
 
         try:
             f = open(dictionarySource, 'r')
         except:
-            print("Could not open dictionary file at '%s'" % dictionarySource)
+            log("Could not open dictionary file at '%s'" % dictionarySource)
             return
 
         for line in f:
             word = line.strip().upper()
             ln = len(word)
 
-            indexLen = min(3, ln-1) #Only index by two letters for 3 letter words, and by 1 letter for two letter words
+            indexLen = min(3, ln-1) # Only index by two letters for 3 letter words, and by 1 letter for two letter words
             while indexLen <= ln and indexLen <= MAX_INDEX_LEN:
                 for i in range(ln+1 - indexLen):
                     key = word[i:i+indexLen]
@@ -638,22 +665,23 @@ def initDictionary(): #TODO make 2 letter word list
                     dictionary[key].append(word)
                 indexLen+=1
 
-        print("Done in %f seconds" % (time()-startTime))
+        log("Done in %f seconds" % (time()-startTime))
     else:
-        print("Dictionary file at '%s' could not be found" % dictionarySource)
+        log("Dictionary file at '%s' could not be found" % dictionarySource)
+
 def initBoard():
     global WIDTH, HEIGHT, board
     board = {}
     WIDTH = 0
     HEIGHT = 0
-    print("Initializing Board:", end=' ')
+    log("Initializing Board:", end=' ')
     startTime = time()
 
     if boardSource:
         try:
             f = open(boardSource, 'r')
         except:
-            print("Could not open board file at '%s'" % boardSource)
+            log("Could not open board file at '%s'" % boardSource)
             return
 
         ln = 0
@@ -678,9 +706,10 @@ def initBoard():
                 board[ln][cn][multiplier] = int(ch)
                 cn+=1
             ln+=1
-    print("Done in %f seconds" % (time()-startTime))
+    log("Done in %f seconds" % (time()-startTime))
+
 def initBagTemplate():
-    print("Initializing Bag Template:", end=' ')
+    log("Initializing Bag Template:", end=' ')
     startTime = time()
 
     def s(ch, amt, val):
@@ -693,7 +722,7 @@ def initBagTemplate():
         try:
             f = open(bagTemplateSource, 'r')
         except:
-            print("Could not open bag file at '%s'" % bagTemplateSource)
+            log("Could not open bag file at '%s'" % bagTemplateSource)
             return
 
         for line in f:
@@ -732,9 +761,10 @@ def initBagTemplate():
         s('q', 1, 10)
         s('z', 1, 10)
 
-    print("Done in %f seconds" % (time()-startTime))
+    log("Done in %f seconds" % (time()-startTime))
+
 def initStatistics():
-    print("Initializing new Statistics:", end=' ')
+    log("Initializing new Statistics:", end=' ')
     startTime = time()
 
     global statistics
@@ -744,7 +774,8 @@ def initStatistics():
     statistics[AMOUNT] = {}
     statistics[VALUE] = {}
 
-    print("Done in %f seconds" % (time()-startTime))
+    log("Done in %f seconds" % (time()-startTime))
+
 def init():
     initStatistics()
     initBoard()
@@ -787,7 +818,7 @@ def runWWFBot():
 
 def postGameToTumblr():
     img = boardImage()
-    img.save("../public_html/tumblr/temp.png")
+    img.save(TUMBLR_IMAGE_PATH)
 
     title = "ScrabbleBot Showdown"
     if scores[0] == scores[1]:
@@ -795,7 +826,7 @@ def postGameToTumblr():
     else:
         title = "AI defeats AI: %d - %d" % (scores[0], scores[1])
 
-    tumblr.imageToTumblr(title, "http://www.princeton.edu/~dbieber/tumblr/temp.png")
+    tumblr.imageToTumblr(title, TUMBLR_IMAGE_URL)
 
     # text = '<font face="courier new">'
     # for row in board:
@@ -828,11 +859,11 @@ def gatherStats():
         postGameToTumblr()
         statistics[GAMES_PLAYED] += 1
         printAll()
-        print(scores)
+        log(scores)
         writeStats()
-        print("Game %d; %d moves made" % (statistics[GAMES_PLAYED], statistics[MOVES_MADE]))
+        log("Game %d; %d moves made" % (statistics[GAMES_PLAYED], statistics[MOVES_MADE]))
 def loadStats():
-    print("Loading Stats:", end=' ')
+    log("Loading Stats:", end=' ')
     initStatistics()
     f = open(STATISTICS_SOURCE, 'r')
     global statistics
@@ -841,12 +872,12 @@ def loadStats():
         statistics[AMOUNT][line[0]] = int(line[1])
         statistics[VALUE][line[0]] = int(line[2])
     f.close()
-    print("Done", end=' ')
+    log("Done", end=' ')
 def setStatSource(tokens):
     global STATISTICS_SOURCE
     STATISTICS_SOURCE = tokens[2]
 def addStats():
-    print("Aggregating Stats:", end=' ')
+    log("Aggregating Stats:", end=' ')
     f = open(STATISTICS_SOURCE, 'r')
     global statistics
     for line in f:
@@ -858,7 +889,7 @@ def addStats():
         statistics[VALUE][line[0]] += int(line[2])
 
     f.close()
-    print("Done", end=' ')
+    log("Done", end=' ')
 def writeStats():
     f = open(STATISTICS_SOURCE, 'w')
     for i in statistics[AMOUNT]:
@@ -866,7 +897,7 @@ def writeStats():
     f.close()
 
 def simulateGame():
-    print("Simulating Game:", end=' ')
+    log("Simulating Game:", end=' ')
     startTime = time()
     totalSkips = 0
     global gameOver, currentPlayer
@@ -889,17 +920,17 @@ def simulateGame():
         else:
             totalSkips+=1
             changeTurn()
-    print("Game simulated in %f seconds" % (time()-startTime))
+    log("Game simulated in %f seconds" % (time()-startTime))
 def lookup(tokens):
     if len(tokens)>1:
         w = tokens[1].upper()
         if w in dictionary:
-            print(dictionary[w])
+            log(dictionary[w])
         else:
-            print("Not found.")
+            log("Not found.")
 def nextTurn(tokens):
     changeTurn()
-    print("Player %d's turn." % (currentPlayer+1))
+    log("Player %d's turn." % (currentPlayer+1))
 def printHats():
     global statistics, STATISTICS_SOURCE
     dir = "hats_9_11_1_30am"
@@ -923,7 +954,7 @@ def startCMD():
     #registerCommand(lookup, ['L', 'LU', 'LOOKUP'])
     move = None
     while True:
-        print('>>>', end=' ')
+        log('>>>', end=' ')
         tokens = raw_input().strip().split(' ')
         cmd = tokens[0].upper()
         if cmd == 'QUIT':
@@ -943,7 +974,7 @@ def startCMD():
         elif cmd == 'WRITE_STATS':
             writeStats()
         elif cmd == 'VIEW_STATS':
-            print(statistics)
+            log(statistics)
         elif cmd == 'HATS_':
             printHats()
         elif cmd == 'L' or cmd == 'LU' or cmd == 'LOOKUP':
@@ -955,7 +986,7 @@ def startCMD():
         elif cmd == 'B' or cmd == 'BEST':
             results = bestMove()
             if results:
-                print(results)
+                log(results)
                 pos = DirectedPosition(results[2][0], results[2][1], results[2][2])
                 move = {}
                 placeWord(move, pos.row, pos.col, pos.vert, results[1].upper())
@@ -1004,7 +1035,7 @@ def startCMD():
                     NUM_PLAYERS = int(tokens[2])
                 elif what=='BL' or what=='HANDLE_BLANK_TILES' or what=='BLANKS':
                     HANDLE_BLANK_TILES = not HANDLE_BLANK_TILES
-                    print("HANDLE_BLANK_TILES: %s" % HANDLE_BLANK_TILES)
+                    log("HANDLE_BLANK_TILES: %s" % HANDLE_BLANK_TILES)
         elif cmd == 'I' or cmd == 'INIT':
             if len(tokens) > 1:
                 what = tokens[1].upper()
@@ -1021,11 +1052,11 @@ def startCMD():
                 if what=='MOVE':
                     printAll(move)
                 elif what=='S' or what=='SCORE':
-                    print(scores)
+                    log(scores)
                 elif what == 'B' or what=='BAG':
-                    print(bag)
+                    log(bag)
                 elif what == 'GAMEOVER' or what=='G':
-                    print(gameOver)
+                    log(gameOver)
             else:
                 printAll()
         elif cmd == 'REFILL':
