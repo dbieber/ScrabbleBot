@@ -828,30 +828,6 @@ def postGameToTumblr():
 
     tumblr.imageToTumblr(title, TUMBLR_IMAGE_URL)
 
-    # text = '<font face="courier new">'
-    # for row in board:
-        # for col in board[row]:
-            # default = '<font color="white">_</font>'
-            # if row == int(HEIGHT/2) and col == int(WIDTH/2):
-                # default = '*'
-            # boardLetter = letterAt(row, col)
-            # if boardLetter:
-                # letter = boardLetter
-            # else:
-                # letter = default
-            # if blankAt(row, col):
-                # letter = letter.lower()
-            # text += letter + " "
-        # text += '\n'
-
-    # text += '\nRacks:\n'
-    # for p in range(NUM_PLAYERS):
-        # text+= "%d: %s   (%d)\n" % ((p+1), ", ".join(racks[p]), scores[p])
-
-    # text += '</font>'
-
-    # tumblr.postToTumblr(title, text)
-
 def gatherStats():
     while True:
         newGame()
@@ -862,6 +838,7 @@ def gatherStats():
         log(scores)
         writeStats()
         log("Game %d; %d moves made" % (statistics[GAMES_PLAYED], statistics[MOVES_MADE]))
+
 def loadStats():
     log("Loading Stats:", end=' ')
     initStatistics()
@@ -873,9 +850,11 @@ def loadStats():
         statistics[VALUE][line[0]] = int(line[2])
     f.close()
     log("Done", end=' ')
+
 def setStatSource(tokens):
     global STATISTICS_SOURCE
     STATISTICS_SOURCE = tokens[2]
+
 def addStats():
     log("Aggregating Stats:", end=' ')
     f = open(STATISTICS_SOURCE, 'r')
@@ -890,6 +869,7 @@ def addStats():
 
     f.close()
     log("Done", end=' ')
+
 def writeStats():
     f = open(STATISTICS_SOURCE, 'w')
     for i in statistics[AMOUNT]:
@@ -921,6 +901,7 @@ def simulateGame():
             totalSkips+=1
             changeTurn()
     log("Game simulated in %f seconds" % (time()-startTime))
+
 def lookup(tokens):
     if len(tokens)>1:
         w = tokens[1].upper()
@@ -928,9 +909,11 @@ def lookup(tokens):
             log(dictionary[w])
         else:
             log("Not found.")
+
 def nextTurn(tokens):
     changeTurn()
     log("Player %d's turn." % (currentPlayer+1))
+
 def printHats():
     global statistics, STATISTICS_SOURCE
     dir = "hats_9_11_1_30am"
