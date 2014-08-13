@@ -16,7 +16,7 @@ TILE_IMAGE_SOURCE = "rsrc/sprites.png"
 STATISTICS_SOURCE = "data/statsOSPD3.txt"
 
 dictionarySource = "dictionaries/OSPD3.txt"
-boardSource = "boards/wwfBoard.txt"
+boardSource = "boards/scrabbleBoard.txt"
 bagTemplateSource = "bags/scrabbleBag.txt"
 out = None
 
