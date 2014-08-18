@@ -110,6 +110,7 @@ class WordsServer():
         return rack
 
     def get_best_move(self, board, rack):
+        print 'get_best_move'
         scratch.newGame()
         scratch.setBoard(board)
         scratch.setCurrentRack(rack)
@@ -128,13 +129,18 @@ class WordsServer():
         print move
         for row in move:
             for col in move[row]:
+                print 'row, col, move[row][col]'
+                print row, col, move[row][col]
                 space = self.find_visible_element_by_css_selector('.board .space_{}_{}'.format(col, row))
                 letter = move[row][col][0]
                 rack_space = rack.index(letter)
                 rack[rack_space] = None
                 tile = self.find_visible_element_by_css_selector('.rack .rack_space_{}'.format(rack_space))
+                print 'space'
+                print space
+                print 'tile'
+                print tile
                 ActionChains(self.driver).drag_and_drop(tile, space).perform()
-                self.save_image()
 
                 if letter == '_':
                     blanks = self.driver.find_elements_by_css_selector('#dialog_select_blank a')
@@ -142,6 +148,8 @@ class WordsServer():
                         if blank.text.upper() == move[row][col][1].upper():
                             blank.click()
                             break
+
+                self.save_image()
 
     @in_iframe('iframe_canvas')
     def click_play(self):
