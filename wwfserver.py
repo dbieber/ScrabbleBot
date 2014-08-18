@@ -63,10 +63,13 @@ class WordsServer():
         button = self.driver.find_element_by_css_selector(selector)
         button.click()
 
+    def clear_hover_text(self):
+        pass
+
     @in_iframe('iframe_canvas')
     def get_board(self):
         print 'getting board'
-        self.find_visible_element_by_css_selector('.space').click()  # turn off any hover text
+        self.clear_hover_text()
 
         displayed_spaces = self.find_visible_elements_by_css_selector('.board .space')
 
@@ -95,7 +98,7 @@ class WordsServer():
     @in_iframe('iframe_canvas')
     def get_rack(self):
         print 'getting rack'
-        self.find_visible_element_by_css_selector('.space').click()  # turn off any hover text
+        self.clear_hover_text()
 
         tiles = self.driver.find_elements_by_css_selector('.rack .tile')
 
