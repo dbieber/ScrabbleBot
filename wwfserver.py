@@ -111,6 +111,7 @@ class WordsServer():
         scratch.newGame()
         scratch.setBoard(board)
         scratch.setCurrentRack(rack)
+        scratch.printAll()
         results = scratch.bestMove()
 
         pos = scratch.DirectedPosition(results[2][0], results[2][1], results[2][2])
@@ -121,6 +122,8 @@ class WordsServer():
 
     @in_iframe('iframe_canvas')
     def place_move(self, rack, move):
+        print 'place_move'
+        print 'move'
         for row in move:
             for col in move[row]:
                 space = self.find_visible_element_by_css_selector('.board .space_{}_{}'.format(col, row))
