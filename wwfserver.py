@@ -50,9 +50,12 @@ class WordsServer():
         passwd = self.driver.find_element_by_id('pass')
         passwd.send_keys(settings.secure.FACEBOOK_PASS)
 
-        self.driver.get_screenshot_as_file('temp.png')
+        self.save_image()
 
         passwd.submit()
+
+    def save_image(self):
+        self.driver.get_screenshot_as_file('temp.png')
 
     @in_iframe('iframe_canvas')
     def click_accept_button(self):
@@ -126,6 +129,7 @@ class WordsServer():
                 rack[rack_space] = None
                 tile = self.find_visible_element_by_css_selector('.rack .rack_space_{}'.format(rack_space))
                 ActionChains(self.driver).drag_and_drop(tile, space).perform()
+                self.save_image()
 
                 if letter == '_':
                     blanks = self.driver.find_elements_by_css_selector('#dialog_select_blank a')
@@ -143,6 +147,7 @@ class WordsServer():
         ## If you're not logged in, log in
         if ('wordswithfriends' not in self.driver.current_url or
                 not self.find_visible_element_by_css_selector('#iframe_canvas')):
+            print 'Logging in'
             self.login()
             return
 
@@ -154,6 +159,7 @@ class WordsServer():
         ## If there's a FB dialog, close it
         fb_dialog = self.find_visible_element_by_css_selector('.FB_UI_Dialog')
         if fb_dialog:
+            print 'Closing FB Dialog'
             frame_id = fb_dialog.get_attribute('id')
             self.driver.switch_to_frame(frame_id)
             button = self.find_visible_element_by_css_selector('button[name=__CANCEL__]')
@@ -164,6 +170,7 @@ class WordsServer():
         # If the browser doesn't work :(
         modal = self.find_visible_element_by_css_selector('#dialog_unsupported_browser')
         if modal:
+            print 'Closing unsupported browser'
             button = self.find_visible_element_by_css_selector('.buttons button[name=ok]')
             button.click()
             return
@@ -171,6 +178,7 @@ class WordsServer():
         # If you're being challenged, accept
         modal = self.find_visible_element_by_css_selector('#dialog_confirm_accept_game')
         if modal:
+            print 'Accepting challenge'
             button = self.find_visible_element_by_css_selector('.buttons button[name=ok]')
             button.click()
             return
@@ -178,6 +186,7 @@ class WordsServer():
         # If you're asked to confirm you're move, confirm
         modal = self.find_visible_element_by_css_selector('#dialog_confirm_snapshot')
         if modal:
+            print 'Confirming move'
             checkbox = self.find_visible_element_by_css_selector('#snap_input')
             if checkbox and checkbox.is_selected():
                 checkbox.click()  # don't spam
@@ -187,6 +196,7 @@ class WordsServer():
 
         modal = self.find_visible_element_by_css_selector('#dialog_confirm_html_share')
         if modal:
+            print 'Confirming move 2'
             checkbox = self.find_visible_element_by_css_selector('.dialog_checkbox input[type=checkbox]')
             if checkbox and checkbox.is_selected():
                 checkbox.click()  # don't spam
@@ -197,11 +207,13 @@ class WordsServer():
         # If you're asked to spam you're friends, don't
         modal = self.find_visible_element_by_css_selector('#dialog_suggested')
         if modal:
+            print 'Not spamming'
             self.find_visible_element_by_css_selector('#dialog_suggested .close_btn').click()
             return
 
         modal = self.find_visible_element_by_css_selector('#dialog_achievement')
         if modal:
+            print 'Not spamming 2'
             button = self.find_visible_element_by_css_selector('.buttons button[name=cancel]')
             button.click()
             return
@@ -209,6 +221,7 @@ class WordsServer():
         # If you made an invalid word, edit your dictionary:
         modal = self.find_visible_element_by_css_selector('#dialog_invalid_word')
         if modal:
+            print 'Invalid word'
             dialog = self.find_visible_element_by_css_selector('.invalid_words_info span').text
             bad_word = dialog.split("'")[1]
             scratch.removeWord(bad_word)
@@ -219,6 +232,7 @@ class WordsServer():
         # If you made an invalid move, try again (maybe the screen moved during a drag)
         modal = self.find_visible_element_by_css_selector('#dialog_invalid_move')
         if modal:
+            print 'Invalid move'
             button = self.find_visible_element_by_css_selector('button')
             button.click()
             return
@@ -226,7 +240,9 @@ class WordsServer():
         ## If we're in a game, make a move
         current_game = self.find_visible_element_by_css_selector('#game_summaries .my_move .game.active')
         if current_game:
+            print 'In a game'
             if 'loading' in current_game.get_attribute('class'):
+                print 'Loading'
                 return  # don't want to try to play before it's loaded
             self.driver.switch_to_default_content()  # avoid double enter
             self.take_turn()
@@ -235,8 +251,12 @@ class WordsServer():
         ## If there are any games in which it's our turn, choose one
         our_games = self.find_visible_elements_by_css_selector('#game_summaries .my_move .game a')
         if our_games:
+            print 'Choosing first game'
             our_games[0].click()
             return
+
+        print 'Nothing happened.'
+
 
     def take_turn(self):
         board = self.get_board()
@@ -252,7 +272,7 @@ def main():
     while True:
         server.act()
         time.sleep(5)
-        server.driver.get_screenshot_as_file('temp.png')
+        server.save_image()
 
 if __name__ == '__main__':
     main()
