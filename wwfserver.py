@@ -64,7 +64,12 @@ class WordsServer():
         button.click()
 
     def clear_hover_text(self):
-        pass
+        tt = self.find_visible_element_by_css_selector('#wwf_tooltip')
+        if tt:
+            self.driver.execute_script("""
+            var element = arguments[0];
+            element.parentNode.removeChild(element);
+            """, tt)
 
     @in_iframe('iframe_canvas')
     def get_board(self):
