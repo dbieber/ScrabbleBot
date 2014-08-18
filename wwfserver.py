@@ -64,8 +64,10 @@ class WordsServer():
         button.click()
 
     def clear_hover_text(self):
+        print 'maybe clear'
         tt = self.find_visible_element_by_css_selector('#wwf_tooltip')
         if tt:
+            print 'clear activating'
             self.driver.execute_script("""
             var element = arguments[0];
             element.parentNode.removeChild(element);
