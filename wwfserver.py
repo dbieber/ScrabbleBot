@@ -164,15 +164,6 @@ class WordsServer():
         # If the browser doesn't work :(
         modal = self.find_visible_element_by_css_selector('#dialog_unsupported_browser')
         if modal:
-            buttons = self.find_visible_elements_by_css_selector('.buttons button')
-            print 1
-            for b in buttons:
-                print b.get_attribute('name')
-
-            buttons = self.find_visible_elements_by_css_selector('button')
-            print 2
-            for b in buttons:
-                print b.get_attribute('name')
             button = self.find_visible_element_by_css_selector('.buttons button[name=ok]')
             button.click()
             return
