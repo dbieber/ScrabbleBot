@@ -669,6 +669,24 @@ def initDictionary(): # TODO(Bieber): make 2 letter word list
     else:
         log("Dictionary file at '%s' could not be found" % dictionarySource)
 
+def removeWord(badWord):
+    global dictionary
+    # IF YOU MODIFY THIS YOU HAVE TO MODIFY initDictionary
+    word = badWord.strip().upper()
+    ln = len(word)
+
+    indexLen = min(3, ln-1)
+    while indexLen <= ln and indexLen <= MAX_INDEX_LEN:
+        for i in range(ln+1 - indexLen):
+            key = word[i:i+indexLen]
+            if key in dictionary:
+                try:
+                    dictionary[key].remove(word)
+                except:
+                    pass
+        indexLen+=1
+
+
 def initBoard():
     global WIDTH, HEIGHT, board
     board = {}
