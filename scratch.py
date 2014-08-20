@@ -822,7 +822,7 @@ def setBoard(wwfBoard):
             board[row][col][LETTER] = wwfBoard[row][col]
 
 def setCurrentRack(wwfRack):
-    for i in range(7):
+    for i in range(len(wwfRack)):
         racks[currentPlayer][i] = wwfRack[i]
 
 def runWWFBot():

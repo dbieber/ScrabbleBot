@@ -15,10 +15,24 @@ scratch.boardSource = "boards/wwfBoard.txt"
 
 class WordsServer():
     def __init__(self):
-        self.driver = webdriver.PhantomJS()
-        # self.driver = webdriver.Firefox()
-        self.driver.set_window_size(648, 768)
+        # self.driver = webdriver.PhantomJS()
+        self.driver = webdriver.Firefox()
+        self.driver.set_window_size(1648, 1768)
         self.driver.set_window_position(630, 0)
+
+    def enter(self):
+        self.driver.switch_to_frame('iframe_canvas')
+
+    def exit(self):
+        self.driver.switch_to_default_content()
+
+    def in_canvas(func):
+        def newfunc(self, *args, **kwargs):
+            self.enter()
+            result = func(self, *args, **kwargs)
+            self.exit()
+            return result
+        return newfunc
 
     def in_iframe(frame_name):
         def decorator(func):
@@ -40,24 +54,29 @@ class WordsServer():
             return filtered_els[0]
 
     def login(self):
+        # TODO(Bieber): Be more fault tolerant
         WWF_URL = 'https://apps.facebook.com/wordswithfriends/'
         self.driver.get(WWF_URL)
 
         time.sleep(1)
 
-        email = self.driver.find_element_by_id('email')
-        email.send_keys(settings.secure.FACEBOOK_EMAIL)
-        passwd = self.driver.find_element_by_id('pass')
-        passwd.send_keys(settings.secure.FACEBOOK_PASS)
+        email = self.find_visible_element_by_css_selector('#email')
+        if email:
+            email.send_keys(settings.secure.FACEBOOK_EMAIL)
 
         self.save_image()
 
-        passwd.submit()
+        passwd = self.find_visible_element_by_css_selector('#pass')
+        if passwd:
+            passwd.send_keys(settings.secure.FACEBOOK_PASS)
+            passwd.submit()
+
+        self.save_image()
 
     def save_image(self):
         self.driver.get_screenshot_as_file('temp.png')
 
-    @in_iframe('iframe_canvas')
+    @in_canvas
     def click_accept_button(self):
         selector = '#dialog_confirm_accept_game > div:nth-child(2) > button:nth-child(1)'
         button = self.driver.find_element_by_css_selector(selector)
@@ -65,20 +84,22 @@ class WordsServer():
 
     def clear_hover_text(self):
         print 'maybe clear'
-        tt = self.find_visible_element_by_css_selector('#wwf_tooltip')
-        if tt:
-            print 'clear activating'
-            self.driver.execute_script("""
-            var element = arguments[0];
-            element.parentNode.removeChild(element);
-            """, tt)
+        # tt = self.find_visible_element_by_css_selector('#wwf_tooltip')
+        # if tt:
+        #     print 'clear activating'
+        #     self.driver.execute_script("""
+        #         var element = arguments[0];
+        #         element.parentNode.removeChild(element);
+        #         """, tt)
 
-    @in_iframe('iframe_canvas')
+    @in_canvas
     def get_board(self):
         print 'getting board'
         self.clear_hover_text()
 
         displayed_spaces = self.find_visible_elements_by_css_selector('.board .space')
+
+        print 'got displayed_spaces'
 
         board = {}
         for i in xrange(15):
@@ -90,19 +111,20 @@ class WordsServer():
             row = int(row_str)
             col = int(col_str)
 
-            contents = space.find_elements_by_tag_name('span')
-            if contents:
-                # TODO(Bieber): Fix ordering for blank tiles
-                letter = contents[0].text
-                value = contents[1].text
-            else:
+            contents = space.text.split('\n')
+            if len(contents) >= 1:
+                letter = contents[0]
+            if letter == '':
                 letter = None
 
             board[row][col] = letter
 
+        print 'got board'
+        self.save_image()
+
         return board
 
-    @in_iframe('iframe_canvas')
+    @in_canvas
     def get_rack(self):
         print 'getting rack'
         self.clear_hover_text()
@@ -133,7 +155,7 @@ class WordsServer():
 
         return move
 
-    @in_iframe('iframe_canvas')
+    @in_canvas
     def place_move(self, rack, move):
         print 'place_move'
         print move
@@ -151,6 +173,7 @@ class WordsServer():
                 print 'tile'
                 print tile
                 ActionChains(self.driver).drag_and_drop(tile, space).perform()
+                time.sleep(1)
 
                 if letter == '_':
                     blanks = self.driver.find_elements_by_css_selector('#dialog_select_blank a')
@@ -161,12 +184,14 @@ class WordsServer():
 
                 self.save_image()
 
-    @in_iframe('iframe_canvas')
+    @in_canvas
     def click_play(self):
         play_button = self.find_visible_element_by_css_selector('.toolbar .play')
         play_button.click()
 
     def act(self):
+        # TODO(Bieber): If the same thing happens over and over, refresh
+
         ## If you're not logged in, log in
         if ('wordswithfriends' not in self.driver.current_url or
                 not self.find_visible_element_by_css_selector('#iframe_canvas')):
@@ -177,7 +202,7 @@ class WordsServer():
         ## We're logged in, so everything happens in the frame
         self.act_in_frame()
 
-    @in_iframe('iframe_canvas')
+    @in_canvas
     def act_in_frame(self):
         ## If there's a FB dialog, close it
         fb_dialog = self.find_visible_element_by_css_selector('.FB_UI_Dialog')
@@ -190,12 +215,23 @@ class WordsServer():
             return
 
         ## Respond to any open dialog boxes
+        # Close any ads
+        close = self.find_visible_element_by_css_selector('.zap-zac-close')
+        if close:
+            close.click()
+
         # If the browser doesn't work :(
         modal = self.find_visible_element_by_css_selector('#dialog_unsupported_browser')
         if modal:
             print 'Closing unsupported browser'
             button = self.find_visible_element_by_css_selector('.buttons button[name=ok]')
             button.click()
+            return
+
+        modal = self.find_visible_element_by_css_selector('#dialog_fb_error')
+        if modal:
+            print 'FB error: refreshing'
+            self.driver.refresh()
             return
 
         # If you're being challenged, accept
@@ -250,6 +286,8 @@ class WordsServer():
             scratch.removeWord(bad_word)
             button = self.find_visible_element_by_css_selector('.buttons button[name=cancel]')
             button.click()
+            recall = self.find_visible_element_by_css_selector('.game-btn.recall')
+            recall.click()
             return
 
         # If you made an invalid move, try again (maybe the screen moved during a drag)
@@ -258,6 +296,13 @@ class WordsServer():
             print 'Invalid move'
             button = self.find_visible_element_by_css_selector('button')
             button.click()
+            recall = self.find_visible_element_by_css_selector('.game-btn.recall')
+            recall.click()
+            return
+
+        ## Make sure we didn't already make a move (it could be submitting/loading)
+        if self.find_visible_element_by_css_selector('#sending_text'):
+            print 'Sending, so do nothing'
             return
 
         ## If we're in a game, make a move
