@@ -242,6 +242,13 @@ class WordsServer():
             button.click()
             return
 
+        # If the game is over, dismiss
+        modal = self.find_visible_element_by_css_selector('#dialog_game_over')
+        if modal:
+            button = self.find_visible_element_by_css_selector('.buttons button[name=cancel]')
+            button.click()
+            return
+
         # If you're asked to confirm you're move, confirm
         modal = self.find_visible_element_by_css_selector('#dialog_confirm_snapshot')
         if modal:
