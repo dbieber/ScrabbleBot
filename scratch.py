@@ -52,6 +52,7 @@ alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 currentPlayer = 0
 scores = {}
+allPlayedWords = set()
 
 searched = {}
 
@@ -534,16 +535,23 @@ def playMove(move):
 
         # Add up score
         score = 0
+        newWords = set()
         for row in move:
             for col in move[row]:
                 if not oneRow:
                     score += getWordScore(row, col, False, move) #Horizontal
+                    newWords.add(textAt(row, col, False, move))
                 if not oneCol:
                     score += getWordScore(row, col, True, move)
+                    newWords.add(textAt(row, col, True, move))
         if oneRow:
             score += getWordScore(row, col, False, move)
+            newWords.add(textAt(row, col, False, move))
         if oneCol:
             score += getWordScore(row, col, True, move)
+            newWords.add(textAt(row, col, True, move))
+        newWords = set(filter(lambda x: len(x) > 1, newWords))
+        allPlayedWords.update(newWords)
 
         scores[currentPlayer] += score
 
@@ -627,6 +635,10 @@ def resetScores():
     for p in range(NUM_PLAYERS):
         scores[p] = 0
 
+def resetWords():
+    global allPlayedWords
+    allPlayedWords = set()
+
 def newGame():
     global gameOver
     clearBoard()
@@ -634,6 +646,7 @@ def newGame():
     fillBag()
     fillRacks()
     resetScores()
+    resetWords()
     currentPlayer = 0
     gameOver = False
 
@@ -823,7 +836,10 @@ def setBoard(wwfBoard):
 
 def setCurrentRack(wwfRack):
     for i in range(len(wwfRack)):
+        # TODO(Bieber): Occasionally errors here
         racks[currentPlayer][i] = wwfRack[i]
+
+    racks[currentPlayer] = racks[currentPlayer][:len(wwfRack)]
 
 def runWWFBot():
     (wwfBoard, wwfRack) = boardGrab.getWWFData()
@@ -843,6 +859,8 @@ def postGameToTumblr():
         title = "AI's Find Peace. ScrabbleBots tie."
     else:
         title = "AI defeats AI: %d - %d" % (scores[0], scores[1])
+
+    title = "%s (%s)" % (title, ' '.join(sorted(scratch.allPlayedWords)))
 
     tumblr.imageToTumblr(title, TUMBLR_IMAGE_URL)
 
