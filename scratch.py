@@ -860,7 +860,7 @@ def postGameToTumblr():
     else:
         title = "AI defeats AI: %d - %d" % (scores[0], scores[1])
 
-    title = "%s (%s)" % (title, ' '.join(sorted(scratch.allPlayedWords)))
+    title = "%s (%s)" % (title, ' '.join(sorted(allPlayedWords)))
 
     tumblr.imageToTumblr(title, TUMBLR_IMAGE_URL)
 
