@@ -17,7 +17,7 @@ class WordsServer():
     def __init__(self):
         # self.driver = webdriver.PhantomJS()
         self.driver = webdriver.Firefox()
-        self.driver.set_window_size(1648, 1768)
+        self.driver.set_window_size(800, 600)
         self.driver.set_window_position(630, 0)
 
     def enter(self):
@@ -83,7 +83,8 @@ class WordsServer():
         button.click()
 
     def clear_hover_text(self):
-        print 'maybe clear'
+        pass
+        # print 'maybe clear'
         # tt = self.find_visible_element_by_css_selector('#wwf_tooltip')
         # if tt:
         #     print 'clear activating'
@@ -220,6 +221,14 @@ class WordsServer():
         if close:
             close.click()
 
+        # If you won, play again
+        modal = self.find_visible_element_by_css_selector('.dialog_game_over.modal')
+        if modal:
+            print 'Clicking rematch'
+            button = self.find_visible_element_by_css_selector('.buttons button[name=rematch]')
+            button.click()
+            return
+
         # If the browser doesn't work :(
         modal = self.find_visible_element_by_css_selector('#dialog_unsupported_browser')
         if modal:
@@ -327,6 +336,12 @@ class WordsServer():
         our_games = self.find_visible_elements_by_css_selector('#game_summaries .my_move .game a')
         if our_games:
             print 'Choosing first game'
+            our_games[0].click()
+            return
+
+        our_games = self.find_visible_elements_by_css_selector('#wwf-lobby_list_yours a')
+        if our_games:
+            print 'Choosing first game (2)'
             our_games[0].click()
             return
 
